@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TelegramBotManager.Common.Helpers;
+using TelegramBotManager.Configurations;
 
 namespace TelegramBotManager.Functions;
 
@@ -14,7 +15,7 @@ namespace TelegramBotManager.Functions;
 /// </summary>
 public class TelegramMessage(
     ILogger<TelegramMessage> _logger,
-    IConfiguration _configuration,
+    FinancialControlOptions _financialControlOptions,
     [FromKeyedServices("FinancialQueueClient")] QueueClient _financialQueueClient)
 {
     /// <summary>
@@ -40,13 +41,8 @@ public class TelegramMessage(
             return new OkResult();
         }
 
-        //TODO: Use IOptions pattern to improve performance.
-        string financialAllowedGroups =
-            _configuration.GetValue<string>("FinancialControl:AllowedGroups");
-
         bool isMessagFromFinancialControlGroups =
-            financialAllowedGroups?.Split(';')
-                                   .Any(requestBody.Contains) ?? default;
+            requestBody.Contains(_financialControlOptions.AllowedGroup.ToString());
 
         if (!isMessagFromFinancialControlGroups)
         {

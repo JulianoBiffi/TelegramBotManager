@@ -1,9 +1,9 @@
 ﻿using MediatR;
-using Telegram.Bot.Types;
+using TelegramBotManager.Application.DTOs;
 
 namespace TelegramBotManager.Application.FinancialControl.FinanceControlMessageReceived;
 
 public class FinanceControlMessageReceivedCommand : IRequest<FinanceControlMessageReceivedResult>
 {
-    public Update Request;
+    public TelegramUpdateDto Request;
 }

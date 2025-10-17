@@ -1,4 +1,3 @@
-using Azure.Storage.Blobs;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Configuration;
@@ -23,9 +22,15 @@ builder.Services
 
 builder.UseMiddleware<ValidationExceptionMiddleware>();
 
+builder.UseMiddleware<TelegramExceptionMiddleware>();
+
 IConfiguration configuration = builder.Configuration;
 
 builder.Services.AddAzureStorageAndQueue(configuration);
+
+builder.Services.AddTelegramBotClient(configuration);
+
+builder.Services.AddFinancialControlOptions(configuration);
 
 builder.Services.AddAutoMapper(configAction => { }, typeof(Program));
 

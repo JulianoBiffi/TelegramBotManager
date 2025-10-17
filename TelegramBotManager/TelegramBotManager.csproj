@@ -35,9 +35,7 @@
 
   <ItemGroup>
     <Folder Include="Application\Queries\" />
-    <Folder Include="Configurations\" />
     <Folder Include="Application\Handlers\NewFolder\" />
-    <Folder Include="Common\Helpers\" />
     <Folder Include="Domain\" />
     <Folder Include="Infrastructure\" />
   </ItemGroup>
