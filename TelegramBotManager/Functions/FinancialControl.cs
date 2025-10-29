@@ -1,22 +1,52 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
+using MediatR;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using TelegramBotManager.Application.DTOs;
+using TelegramBotManager.Application.FinancialControl.FinanceControlMessageReceived;
+using TelegramBotManager.Common.Exceptions;
 
 namespace TelegramBotManager.Functions;
 
 /// <summary>
 /// Manages financial control operations with telegram bot.
 /// </summary>
-public class FinancialControl(ILogger<FinancialControl> _logger, IConfiguration _configuration)
+public class FinancialControl(IMediator _mediator, ILogger<FinancialControl> _logger, [FromKeyedServices("FinancialQueueClient")] QueueClient _financialQueueClient)
 {
-    [Function("FinanceControlMessage")]
-    public IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
+    [Function("FinancialControlQueue")]
+    public async Task Run(
+        [QueueTrigger("financial-control-queue", Connection = "Azure:StorageConnectionString")]
+        QueueMessage message,
+        CancellationToken cancellationToken)
     {
-        string botToken = _configuration.GetSection("FinancialControl")["TelegramBotToken"];
+        string messageBody =
+            message.Body.ToString() ?? string.Empty;
 
-        _logger.LogInformation("C# HTTP trigger function processed a request.");
-        return new OkObjectResult("Welcome to Azure Functions!");
+        _logger.LogInformation($"New message received! {messageBody}");
+
+        if (string.IsNullOrEmpty(messageBody))
+            _logger.LogInformation($"The message is empty!");
+
+        var update =
+            JsonConvert.DeserializeObject<TelegramUpdateDto>(messageBody);
+
+        await _financialQueueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, cancellationToken);
+        try
+        {
+            await _mediator.Send(
+                new FinanceControlMessageReceivedCommand() { Request = update },
+                cancellationToken);
+        }
+        catch (TelegramException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TelegramException(ex.Message, ex);
+        }
     }
 }
