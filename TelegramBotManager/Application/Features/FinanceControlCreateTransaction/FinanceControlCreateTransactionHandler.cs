@@ -56,8 +56,8 @@ public class FinanceControlCreateTransactionHandler(
                         CreditCard = savedTransaction.CreditCard,
                         Description = currentDto.Description + (currentDto.ParcelNumber.HasValue ? $" (Parcela {parcelNumber + 1}/{currentDto.ParcelNumber})" : string.Empty),
                         Date = parcelDate,
-                        Value = currentDto.Value,
-                        CategoryId = tryToFindCategory?.Id,
+                        Value = savedTransaction.Value,
+                        CategoryId = savedTransaction.CategoryId,
                         ParcelNumber = parcelNumber + 1
                     },
                     cancellationToken);
