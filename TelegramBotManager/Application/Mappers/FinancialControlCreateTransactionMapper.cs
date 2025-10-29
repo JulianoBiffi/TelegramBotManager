@@ -13,7 +13,7 @@ public static class FinancialControlCreateTransactionMapper
                        .Select(l => l.Trim())
                        .ToArray();
 
-        if (chunckOfLines.Length < 6 || chunckOfLines.Length > 6)
+        if (chunckOfLines.Length < 7 || chunckOfLines.Length > 7)
             throw new TelegramException(Common.Enum.TelegramInvalidOptionExceptionEnum.InvalidTransactionFormat, "Texto de lançamento em formato inválido.");
 
         var currentDTO =
@@ -44,6 +44,15 @@ public static class FinancialControlCreateTransactionMapper
 
         currentDTO.Description =
             chunckOfLines[5].Split(':')[1];
+
+
+        string parcelNumberText =
+            chunckOfLines[6].Split(':')[1]
+                            .Trim();
+        currentDTO.ParcelNumber =
+            int.TryParse(parcelNumberText, out int number)
+            ? number
+            : null;
 
         return currentDTO;
     }

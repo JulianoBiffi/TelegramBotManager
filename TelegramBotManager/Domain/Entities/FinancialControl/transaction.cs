@@ -26,6 +26,9 @@ public class transaction : BaseModel, IEntity
     [Column("category_id")]
     public long? CategoryId { get; set; }
 
+    [Column("parcel_number")]
+    public int? ParcelNumber { get; set; }
+
     [JsonIgnore]
     public category Category { get; set; }
 }

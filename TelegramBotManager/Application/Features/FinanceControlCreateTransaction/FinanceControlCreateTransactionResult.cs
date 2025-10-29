@@ -17,6 +17,8 @@ public class FinanceControlCreateTransactionResult
 
     public category Category { get; set; }
 
+    public int? ParcelNumber { get; set; }
+
     public decimal AmmountOfMonth { get; set; }
 
     public decimal AmmountOfThisCategory { get; set; }

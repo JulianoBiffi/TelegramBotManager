@@ -33,12 +33,36 @@ public class FinanceControlCreateTransactionHandler(
                 new Domain.Entities.FinancialControl.transaction()
                 {
                     CreditCard = currentDto.CreditCard,
-                    Description = currentDto.Description,
+                    Description = currentDto.Description + (currentDto.ParcelNumber.HasValue ? $" (Parcelado em {currentDto.ParcelNumber})" : string.Empty),
                     Date = currentDto.Date,
                     Value = currentDto.Value,
-                    CategoryId = tryToFindCategory?.Id
+                    CategoryId = tryToFindCategory?.Id,
+                    ParcelNumber = currentDto.ParcelNumber.HasValue ? 1 : null
                 },
                 cancellationToken);
+
+        if (currentDto.ParcelNumber.HasValue)
+        {
+            //TODO: Should consider the credit card closing date !!
+
+            for (int parcelNumber = 1; parcelNumber < currentDto.ParcelNumber.Value; parcelNumber++)
+            {
+                var parcelDate =
+                    currentDto.Date.AddMonths(parcelNumber);
+
+                await _TransactionRepository.SaveAsync(
+                    new Domain.Entities.FinancialControl.transaction()
+                    {
+                        CreditCard = savedTransaction.CreditCard,
+                        Description = currentDto.Description + (currentDto.ParcelNumber.HasValue ? $" (Parcela {parcelNumber + 1}/{currentDto.ParcelNumber})" : string.Empty),
+                        Date = parcelDate,
+                        Value = currentDto.Value,
+                        CategoryId = tryToFindCategory?.Id,
+                        ParcelNumber = parcelNumber + 1
+                    },
+                    cancellationToken);
+            }
+        }
 
         var ammountOfMonth =
             await _TransactionRepository.GetAmmountOfMonth(savedTransaction, cancellationToken);

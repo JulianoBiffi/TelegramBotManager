@@ -11,4 +11,5 @@ public class FinancialControlCreateTransaction
     public string CreditCard { get; set; } = string.Empty;
     public decimal Value { get; set; }
     public string Description { get; set; } = string.Empty;
+    public int? ParcelNumber { get; set; }
 }

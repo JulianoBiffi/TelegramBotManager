@@ -66,8 +66,9 @@ public static class FinancialControlHelper
         💰 *Valor:* R$ {result.Value:N2}
         📝 *Descrição:* {result.Description}
         🏷️ *Categoria:* {result.Category.Description}
+        {(result.ParcelNumber.HasValue ? $"🔄 *Número da parcela:* {result.ParcelNumber}" : string.Empty)}
         ━━━━━━━━━━━━━━━━━━━━
-        📊 *Total do mês:* R$ {result.AmmountOfMonth:N2}
+        📊 *Total do mês nesse cartão:* R$ {result.AmmountOfMonth:N2}
         📈 *Total da categoria:* R$ {result.AmmountOfThisCategory:N2}
         """;
 
@@ -86,7 +87,8 @@ public static class FinancialControlHelper
                             "Data (vázio para o dia atual ou insira um intervalo):\n" +
                             "Cartão (bb, nu, porto, va):\n" +
                             "Valor:\n" +
-                            "Descrição da compra:"
+                            "Descrição da compra:\n" +
+                            "Parcelas (vazio se não for parcelado):"
                         );
     }
 }
