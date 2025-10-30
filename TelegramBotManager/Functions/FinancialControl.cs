@@ -18,7 +18,7 @@ public class FinancialControl(IMediator _mediator, ILogger<FinancialControl> _lo
 {
     [Function("FinancialControlQueue")]
     public async Task Run(
-        [QueueTrigger("financial-control-queue", Connection = "Azure:StorageConnectionString")]
+        [QueueTrigger("financial-control-queue", Connection = "Azure_StorageConnectionString")]
         QueueMessage message,
         CancellationToken cancellationToken)
     {

@@ -11,7 +11,7 @@ public static class AzureStorageContiguration
     public static void AddAzureStorageAndQueue(this IServiceCollection services, IConfiguration configuration)
     {
         var azureStorageConnection =
-            configuration.GetValue<string>("Azure:StorageConnectionString");
+            configuration.GetValue<string>("Azure_StorageConnectionString");
 
         if (string.IsNullOrEmpty(azureStorageConnection))
             throw new Exception("AzureStorageCloudStorageConnectionString is not set in the configuration.");
@@ -19,7 +19,7 @@ public static class AzureStorageContiguration
         services.AddSingleton(new BlobServiceClient(azureStorageConnection));
 
         var financialControlQueueName =
-            configuration.GetValue<string>("Azure:QueueFinancialControlName");
+            configuration.GetValue<string>("Azure_QueueFinancialControlName");
 
         services.AddKeyedSingleton("FinancialQueueClient", (sp, key) =>
         {

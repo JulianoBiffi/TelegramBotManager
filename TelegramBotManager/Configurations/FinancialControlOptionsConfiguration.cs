@@ -9,22 +9,22 @@ public static class FinancialControlOptionsConfiguration
     public static void AddFinancialControlOptions(this IServiceCollection services, IConfiguration configuration)
     {
         var financialControlToken =
-            configuration.GetValue<string>("FinancialControl:TelegramBotToken");
+            configuration.GetValue<string>("FinancialControl_TelegramBotToken");
 
         if (string.IsNullOrEmpty(financialControlToken))
-            throw new Exception("FinancialControl:TelegramBotToken is not set in the configuration.");
+            throw new Exception("FinancialControl_TelegramBotToken is not set in the configuration.");
 
         var financialAllowedUserIds =
-            configuration.GetValue<string>("FinancialControl:AllowedUserIds");
+            configuration.GetValue<string>("FinancialControl_AllowedUserIds");
 
         if (string.IsNullOrEmpty(financialAllowedUserIds))
-            throw new Exception("FinancialControl:AllowedUserIds is not set in the configuration.");
+            throw new Exception("FinancialControl_AllowedUserIds is not set in the configuration.");
 
         var financialAllowedGroup =
-            configuration.GetValue<string>("FinancialControl:AllowedGroup");
+            configuration.GetValue<string>("FinancialControl_AllowedGroup");
 
         if (string.IsNullOrEmpty(financialAllowedGroup))
-            throw new Exception("FinancialControl:AllowedGroup is not set in the configuration.");
+            throw new Exception("FinancialControl_AllowedGroup is not set in the configuration.");
 
         var financialOptions =
             new FinancialControlOptions(
