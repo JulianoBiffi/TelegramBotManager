@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /local.settings.json
+/.idea/.idea.TelegramBotManager/.idea
+/TelegramBotManager/Properties/ServiceDependencies/telegram-bot-manager - Web Deploy
