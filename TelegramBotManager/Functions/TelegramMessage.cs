@@ -51,7 +51,12 @@ public class TelegramMessage(
         }
 
         if (isMessagFromFinancialControlGroups)
-            await _financialQueueClient.SendMessageAsync(requestBody, cancellationToken);
+        {
+            var message =
+                await _financialQueueClient.SendMessageAsync(requestBody, cancellationToken);
+
+            _logger.LogInformation($"Message has saved with id: {message?.Value?.MessageId}");
+        }
 
         return new OkResult();
     }

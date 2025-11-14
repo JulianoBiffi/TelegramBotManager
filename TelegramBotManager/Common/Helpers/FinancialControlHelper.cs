@@ -65,7 +65,7 @@ public static class FinancialControlHelper
         💳 *Cartão:* {result.CreditCard}
         💰 *Valor:* R$ {result.Value:N2}
         📝 *Descrição:* {result.Description}
-        🏷️ *Categoria:* {result.Category.Description}
+        {(string.IsNullOrEmpty(result.Category?.Description) ? string.Empty : $"🏷️ *Categoria:* {result.Category.Description}")}
         {(result.ParcelNumber.HasValue ? $"🔄 *Número da parcela:* {result.ParcelNumber}" : string.Empty)}
         ━━━━━━━━━━━━━━━━━━━━
         📊 *Total do mês nesse cartão:* R$ {result.AmmountOfMonth:N2}

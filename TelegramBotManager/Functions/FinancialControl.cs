@@ -30,12 +30,13 @@ public class FinancialControl(IMediator _mediator, ILogger<FinancialControl> _lo
         if (string.IsNullOrEmpty(messageBody))
             _logger.LogInformation($"The message is empty!");
 
-        var update =
-            JsonConvert.DeserializeObject<TelegramUpdateDto>(messageBody);
-
         await _financialQueueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, cancellationToken);
+
         try
         {
+            var update =
+                JsonConvert.DeserializeObject<TelegramUpdateDto>(messageBody);
+
             await _mediator.Send(
                 new FinanceControlMessageReceivedCommand() { Request = update },
                 cancellationToken);

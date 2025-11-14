@@ -25,6 +25,8 @@ public class FinanceControlMessageReceivedHandler(
         if (!validationResult.IsValid)
             throw new ValidationException(validationResult.Errors);
 
+        await _telegramBotClient.SendTyping(_financialControlOptions.AllowedGroup.ToString());
+
         if (!_financialControlOptions.AllowedUserIds.Any(user => command.Request.Message.From.Id == user))
             throw new TelegramException($"O usuário {command.Request.Message.From.Id} não está autorizado a enviar mensagens!");
 
@@ -46,7 +48,7 @@ public class FinanceControlMessageReceivedHandler(
                 if (result == null)
                     throw new TelegramException("Erro ao cadastrar a transação!");
 
-                if (result.Category != null)
+              //  if (result.Category != null)
                     await _telegramBotClient.PrintCreatedTransaction(_financialControlOptions.AllowedGroup, result);
 
                 break;

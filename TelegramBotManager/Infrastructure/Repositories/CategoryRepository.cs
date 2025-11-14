@@ -22,12 +22,15 @@ public class CategoryRepository : BaseRepository<category>, ICategoryRepository
     public async Task<category> GetCategoryByTranscationDesciption(
         string transactionDescription)
     {
+        if (string.IsNullOrEmpty(transactionDescription))
+            return null;
+
         return
             (await _supabaseClient.Rpc<List<category>>(
                     "getcategorybytransactiondescription",
                     new Dictionary<string, object>
                     {
-                        { "transactiondescription", transactionDescription }
+                        { "transactiondescription", transactionDescription.Trim() }
                     })
             ).FirstOrDefault();
     }
