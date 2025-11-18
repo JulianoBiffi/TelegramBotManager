@@ -1,7 +1,9 @@
-﻿using Telegram.Bot;
+﻿using System.Text;
+using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBotManager.Application.FinancialControl.FinanceControlCreateTransaction;
+using TelegramBotManager.Domain.Entities.FinancialControl;
 
 namespace TelegramBotManager.Common.Helpers;
 
@@ -29,7 +31,7 @@ public static class FinancialControlHelper
                     {
                         InlineKeyboardButton.WithCallbackData(
                             "    Listagem de lançamentos do mês atual    ",
-                            "\n/relatoriomensal\n" 
+                            "\n/relatoriomensal\n"
                         ),
                     }
                 });
@@ -66,23 +68,70 @@ public static class FinancialControlHelper
         long chatId,
         FinanceControlCreateTransactionResult result)
     {
-        var message = $"""
-        ✅ *Lançamento cadastrado com sucesso!*
-        📅 *Data:* {result.Date:dd/MM/yyyy}
-        💳 *Cartão:* {result.CreditCard}
-        💰 *Valor:* R$ {result.Value:N2}
-        📝 *Descrição:* {result.Description}
-        {(string.IsNullOrEmpty(result.Category?.Description) ? string.Empty : $"🏷️ *Categoria:* {result.Category.Description}")}
-        {(result.ParcelNumber.HasValue ? $"🔄 *Número da parcela:* {result.ParcelNumber}" : string.Empty)}
-        ━━━━━━━━━━━━━━━━━━━━
-        📊 *Total do mês nesse cartão:* R$ {result.AmmountOfMonth:N2}
-        📈 *Total da categoria:* R$ {result.AmmountOfThisCategory:N2}
-        """;
+        var message = new StringBuilder();
+        message.AppendLine("✅ *Lançamento cadastrado com sucesso!*");
+        message.AppendLine($"📅 *Data:* {result.Date:dd/MM/yyyy}");
+        message.AppendLine($"💳 *Cartão:* {result.CreditCard}");
+        message.AppendLine($"💰 *Valor:* R$ {result.Value:N2}");
+        message.AppendLine($"📝 *Descrição:* {result.Description}");
+
+        if (!string.IsNullOrEmpty(result.Category?.Description))
+        {
+            message.AppendLine($"🏷️ *Categoria:* {result.Category.Description}");
+        }
+
+        if (result.ParcelNumber.HasValue)
+        {
+            message.AppendLine($"🔄 *Número da parcela:* {result.ParcelNumber}");
+        }
+
+        message.AppendLine("━━━━━━━━━━━━━━━━━━━━");
+        message.AppendLine($"📊 *Total do mês nesse cartão:* R$ {result.AmmountOfMonth:N2}");
+        message.Append($"📈 *Total da categoria:* R$ {result.AmmountOfThisCategory:N2}");
 
         await telegramBotClient.SendMessage(
             chatId,
-            message,
+            message.ToString(),
             parseMode: ParseMode.Markdown);
+    }
+
+    public static async Task PrintCategorys(
+        this TelegramBotClient telegramBotClient,
+        long chatId,
+        long transactionId,
+        List<category> listOfCategorys)
+    {
+        var message = new StringBuilder();
+        message.AppendLine();
+
+        var allButtons = new List<InlineKeyboardButton>();
+        listOfCategorys.ForEach(category =>
+        {
+            allButtons.Add(
+                InlineKeyboardButton.WithCallbackData(
+                        category.Description,
+                        $"\n/definircategoria&transactionId={transactionId}&categoryId={category.Id}\n"
+                        ));
+        });
+
+        var inlineKeyboard =
+           new InlineKeyboardMarkup(
+               new[]
+               {
+                   allButtons.ToArray(),
+                   new[]
+                   {
+                       InlineKeyboardButton.WithSwitchInlineQueryCurrentChat(
+                            "    Cadastro de nova categoria    ",
+                            $"\n/cadastrarcategoria&transactionId={transactionId}\n" +
+                            "Descrição: "
+                        ),
+                   }
+               });
+
+        await telegramBotClient.SendMessage(
+            chatId, "🔄 *Vincule este lançamento a uma categoria!*",
+            replyMarkup: inlineKeyboard);
     }
 
     private static InlineKeyboardButton CreateTransaction()
@@ -91,11 +140,11 @@ public static class FinancialControlHelper
             InlineKeyboardButton.WithSwitchInlineQueryCurrentChat(
                             "    Cadastro de lançamento    ",
                             "\n/cadastro\n" +
-                            "Data (vázio para o dia atual ou insira um intervalo):\n" +
-                            "Cartão (bb, nu, porto, va):\n" +
-                            "Valor:\n" +
-                            "Descrição da compra:\n" +
-                            "Parcelas (vazio se não for parcelado):"
+                            "Data (vázio para o dia atual ou insira um intervalo): \n" +
+                            "Cartão (bb, nu, porto, va): \n" +
+                            "Valor: \n" +
+                            "Descrição da compra: \n" +
+                            "Parcelas (vazio se não for parcelado): "
                         );
     }
 }

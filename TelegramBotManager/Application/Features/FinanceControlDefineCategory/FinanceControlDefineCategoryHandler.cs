@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
+using TelegramBotManager.Common.Helpers;
 using TelegramBotManager.Configurations;
 using TelegramBotManager.Domain.Interfaces;
 
@@ -16,7 +17,26 @@ public class FinanceControlDefineCategoryHandler(
         FinanceControlDefineCategoryCommand request,
         CancellationToken cancellationToken)
     {
+        if (!request.CategoryId.HasValue)
+        {
+            var listOfCategory =
+                await _CategoryRepository.GetAllCategoriesAsync(cancellationToken);
 
+            await _telegramBotClient.PrintCategorys(
+                _financialControlOptions.AllowedGroup,
+                request.TransactionId,
+                listOfCategory);
+
+            return Unit.Value;
+        }
+        var transaction =
+            await _TransactionRepository.GetTransactionById(request.TransactionId, cancellationToken);
+
+        transaction.CategoryId = request.CategoryId;
+
+        await _TransactionRepository.SaveAsync(transaction, cancellationToken);
+
+        //msg
         return Unit.Value;
     }
 }

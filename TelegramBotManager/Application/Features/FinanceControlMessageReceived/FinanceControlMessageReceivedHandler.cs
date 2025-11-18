@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
+using TelegramBotManager.Application.Features.FinanceControlDefineCategory;
 using TelegramBotManager.Application.Features.FinancialControlDailyReports;
 using TelegramBotManager.Application.FinancialControl.FinanceControlCreateTransaction;
 using TelegramBotManager.Common.Exceptions;
@@ -17,6 +18,8 @@ public class FinanceControlMessageReceivedHandler(
 {
     public async Task<Unit> Handle(FinanceControlMessageReceivedCommand command, CancellationToken cancellationToken)
     {
+        await _telegramBotClient.SendTyping(_financialControlOptions.AllowedGroup.ToString());
+
         var validator =
             new FinanceControlMessageReceivedValidator();
 
@@ -25,8 +28,6 @@ public class FinanceControlMessageReceivedHandler(
 
         if (!validationResult.IsValid)
             throw new ValidationException(validationResult.Errors);
-
-        await _telegramBotClient.SendTyping(_financialControlOptions.AllowedGroup.ToString());
 
         if (!_financialControlOptions.AllowedUserIds.Any(user => command.Request.Message?.From?.Id == user) &&
                 !_financialControlOptions.AllowedUserIds.Any(user => command.Request.CallbackQuery?.From?.Id == user))
@@ -56,8 +57,12 @@ public class FinanceControlMessageReceivedHandler(
                 if (result == null)
                     throw new TelegramException("Erro ao cadastrar a transação!");
 
-              //  if (result.Category != null)
-                    await _telegramBotClient.PrintCreatedTransaction(_financialControlOptions.AllowedGroup, result);
+                await _telegramBotClient.PrintCreatedTransaction(_financialControlOptions.AllowedGroup, result);
+
+                if (result.Category == null)
+                {
+                    await _mediator.Send(new FinanceControlDefineCategoryCommand(result.Id), cancellationToken);
+                }
 
                 break;
             case var text when text.Contains("/relatoriomensal"):

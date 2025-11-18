@@ -22,6 +22,9 @@ public static class ScottPlotHelper
                                             LegendText = $"{cureentCategory.Key} " + $"({cureentCategory.Sum(x => x.Item2) / total:p1})",
                                         })
                                    .ToList();
+        pieSlices =
+            pieSlices.OrderByDescending(p => p.Value)
+                     .ToList();
 
         pieSlices.ForEach(x => x.FillColor = RandomHue(pieSlices));
 
@@ -57,8 +60,9 @@ public static class ScottPlotHelper
 
     private static Color RandomHue(List<PieSlice> pieSlices)
     {
+        Random random = new Random();
         var newColor =
-            Color.RandomHue();
+            new Color(random.Next(256), random.Next(256), random.Next(256));
 
         int attempts = 0;
 
