@@ -35,7 +35,7 @@ public class FinancialControl(IMediator _mediator, ILogger<FinancialControl> _lo
         try
         {
             var update =
-                JsonConvert.DeserializeObject<TelegramUpdateDto>(messageBody);
+                JsonConvert.DeserializeObject<TelegramUpdateDto>(messageBody, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
 
             await _mediator.Send(
                 new FinanceControlMessageReceivedCommand() { Request = update },

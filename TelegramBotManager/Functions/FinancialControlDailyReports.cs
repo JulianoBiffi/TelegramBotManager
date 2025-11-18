@@ -8,8 +8,11 @@ namespace TelegramBotManager.Functions;
 public class FinancialControlDailyReports(IMediator _mediator, ILogger<FinancialControlDailyReports> _logger)
 {
     [Function("FinancialControlDailyReports")]
-    public async Task Run([TimerTrigger("0 11 * * *")] TimerInfo myTimer, CancellationToken cancellationToken)
+    public async Task Run([TimerTrigger("0 8 * * *")] TimerInfo myTimer, CancellationToken cancellationToken)
     {
+        //TODO: Remove
+        // PRD: "0 8 * * *"
+        // Local: "*/1 * * * *"
         _logger.LogInformation("C# Timer trigger function executed at: {executionTime}", DateTime.Now);
 
         if (myTimer.ScheduleStatus is not null)

@@ -1,6 +1,7 @@
 ﻿using Azure.Storage.Blobs;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -14,7 +15,8 @@ namespace TelegramBotManager.Application.Features.FinancialControlDailyReports;
 public class FinancialControlDailyReportsHandler(
     ITransactionRepository _TransactionRepository,
     FinancialControlOptions _financialControlOptions,
-    [FromKeyedServices("FinancialControl")] TelegramBotClient _telegramBotClient) : IRequestHandler<FinancialControlDailyReportsCommand, Unit>
+    [FromKeyedServices("FinancialControl")] TelegramBotClient _telegramBotClient,
+    ILogger<FinancialControlDailyReportsHandler> _logger) : IRequestHandler<FinancialControlDailyReportsCommand, Unit>
 {
     public async Task<Unit> Handle(
         FinancialControlDailyReportsCommand request,
@@ -61,7 +63,7 @@ public class FinancialControlDailyReportsHandler(
                 .Select(g => new Tuple<string, double>(g.Category.Description, (double)g.Value))
                 .ToList();
 
-            var pieChartPath =
+        var pieChartPath =
                 await ScottPlotHelper.GeneratePieChart(transcationWithCategory);
 
             using var fileStream = System.IO.File.OpenRead(pieChartPath);

@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
+using TelegramBotManager.Application.Features.FinancialControlDailyReports;
 using TelegramBotManager.Application.FinancialControl.FinanceControlCreateTransaction;
 using TelegramBotManager.Common.Exceptions;
 using TelegramBotManager.Common.Helpers;
@@ -27,19 +28,26 @@ public class FinanceControlMessageReceivedHandler(
 
         await _telegramBotClient.SendTyping(_financialControlOptions.AllowedGroup.ToString());
 
-        if (!_financialControlOptions.AllowedUserIds.Any(user => command.Request.Message.From.Id == user))
-            throw new TelegramException($"O usuário {command.Request.Message.From.Id} não está autorizado a enviar mensagens!");
+        if (!_financialControlOptions.AllowedUserIds.Any(user => command.Request.Message?.From?.Id == user) &&
+                !_financialControlOptions.AllowedUserIds.Any(user => command.Request.CallbackQuery?.From?.Id == user))
+            throw new TelegramException($"O usuário {command.Request.Message?.From?.Id ?? command.Request.CallbackQuery?.From?.Id} não está autorizado a enviar mensagens!");
 
-        string receivedText =
-            command.Request.Message.Text.ToLower();
+        if (string.IsNullOrEmpty(command.Request.Message?.Text ?? string.Empty) && string.IsNullOrEmpty(command.Request.CallbackQuery?.Data))
+            throw new TelegramException($"Erro ao processar a mensagem!");
 
-        switch (receivedText)
+        string selectedOption =
+            command.Request.Message?.Text?.ToLower() ?? string.Empty;
+
+        selectedOption +=
+            command.Request.CallbackQuery?.Data?.ToLower() ?? string.Empty;
+
+        switch (selectedOption)
         {
             case var text when text.Contains("/cadastro"):
                 var createTransactionCommand =
                     new FinanceControlCreateTransactionCommand()
                     {
-                        MessageBody = receivedText
+                        MessageBody = command.Request.Message.Text.ToLower()
                     };
 
                 var result =
@@ -51,6 +59,11 @@ public class FinanceControlMessageReceivedHandler(
               //  if (result.Category != null)
                     await _telegramBotClient.PrintCreatedTransaction(_financialControlOptions.AllowedGroup, result);
 
+                break;
+            case var text when text.Contains("/relatoriomensal"):
+                await _mediator.Send(
+                    new FinancialControlDailyReportsCommand(),
+                    cancellationToken);
                 break;
             case var text when text.Contains("/relatorio"):
                 break;

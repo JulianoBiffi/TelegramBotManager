@@ -45,4 +45,10 @@
     <Folder Include="Domain\Data\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Common\Assets\Fonts\arialnarrowbold.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

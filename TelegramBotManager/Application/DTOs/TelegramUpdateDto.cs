@@ -1,63 +1,112 @@
-﻿using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
 
 namespace TelegramBotManager.Application.DTOs;
 
 public class TelegramUpdateDto
 {
-    [JsonPropertyName("update_id")]
+    [JsonProperty("update_id")]
     public long UpdateId { get; set; }
 
-    [JsonPropertyName("message")]
+    [JsonProperty("message")]
     public TelegramMessageDto? Message { get; set; }
+
+    [JsonProperty("callback_query")]
+    public TelegramCallbackQueryDto? CallbackQuery { get; set; }
+}
+
+public class TelegramCallbackQueryDto
+{
+    [JsonProperty("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonProperty("from")]
+    public TelegramUserDto? From { get; set; }
+
+    [JsonProperty("message")]
+    public TelegramMessageDto? Message { get; set; }
+
+    [JsonProperty("chat_instance")]
+    public string ChatInstance { get; set; } = string.Empty;
+
+    [JsonProperty("data")]
+    public string? Data { get; set; }
 }
 
 public class TelegramMessageDto
 {
-    [JsonPropertyName("message_id")]
+    [JsonProperty("message_id")]
     public int MessageId { get; set; }
 
-    [JsonPropertyName("from")]
+    [JsonProperty("from")]
     public TelegramUserDto? From { get; set; }
 
-    [JsonPropertyName("chat")]
+    [JsonProperty("chat")]
     public TelegramChatDto? Chat { get; set; }
 
-    [JsonPropertyName("date")]
+    [JsonProperty("date")]
     public long Date { get; set; }
 
-    [JsonPropertyName("text")]
+    [JsonProperty("text")]
     public string? Text { get; set; }
+
+    [JsonProperty("reply_markup")]
+    public TelegramInlineKeyboardMarkupDto? ReplyMarkup { get; set; }
 }
 
 public class TelegramUserDto
 {
-    [JsonPropertyName("id")]
+    [JsonProperty("id")]
     public long Id { get; set; }
 
-    [JsonPropertyName("is_bot")]
+    [JsonProperty("is_bot")]
     public bool IsBot { get; set; }
 
-    [JsonPropertyName("first_name")]
+    [JsonProperty("first_name")]
     public string FirstName { get; set; } = string.Empty;
 
-    [JsonPropertyName("last_name")]
+    [JsonProperty("last_name")]
     public string? LastName { get; set; }
 
-    [JsonPropertyName("language_code")]
+    [JsonProperty("username")]
+    public string? Username { get; set; }
+
+    [JsonProperty("language_code")]
     public string? LanguageCode { get; set; }
 }
 
 public class TelegramChatDto
 {
-    [JsonPropertyName("id")]
+    [JsonProperty("id")]
     public long Id { get; set; }
 
-    [JsonPropertyName("first_name")]
-    public string FirstName { get; set; } = string.Empty;
+    [JsonProperty("first_name")]
+    public string? FirstName { get; set; }
 
-    [JsonPropertyName("last_name")]
+    [JsonProperty("last_name")]
     public string? LastName { get; set; }
 
-    [JsonPropertyName("type")]
+    [JsonProperty("title")]
+    public string? Title { get; set; }
+
+    [JsonProperty("type")]
     public string Type { get; set; } = string.Empty;
+}
+
+public class TelegramInlineKeyboardMarkupDto
+{
+    [JsonProperty("inline_keyboard")]
+    public List<List<TelegramInlineKeyboardButtonDto>> InlineKeyboard { get; set; }
+        = new();
+}
+
+public class TelegramInlineKeyboardButtonDto
+{
+    [JsonProperty("text")]
+    public string Text { get; set; } = string.Empty;
+
+    [JsonProperty("switch_inline_query_current_chat")]
+    public string? SwitchInlineQueryCurrentChat { get; set; }
+
+    [JsonProperty("callback_data")]
+    public string? CallbackData { get; set; }
 }

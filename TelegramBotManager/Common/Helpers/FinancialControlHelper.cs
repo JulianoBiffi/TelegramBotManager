@@ -17,12 +17,19 @@ public static class FinancialControlHelper
                     {
                         CreateTransaction(),
                     },
-                    new[]
+                    /*new[]
                     {
                         InlineKeyboardButton.WithSwitchInlineQueryCurrentChat(
                             "    Listagem de lançamentos    ",
                             "\n/listagem\n" +
                             "Data (vázio para o mês atual):"
+                        ),
+                    },*/
+                    new[]
+                    {
+                        InlineKeyboardButton.WithCallbackData(
+                            "    Listagem de lançamentos do mês atual    ",
+                            "\n/relatoriomensal\n" 
                         ),
                     }
                 });

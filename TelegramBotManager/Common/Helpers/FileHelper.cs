@@ -1,9 +1,14 @@
-﻿namespace TelegramBotManager.Common.Helpers;
+﻿using System.Diagnostics;
+
+namespace TelegramBotManager.Common.Helpers;
 
 public static class FileHelper
 {
-    public static string GetFolderPath =>
-        Path.GetTempPath();
+    public static string TempPath
+        => Path.GetTempPath();
+
+    public static string AppContextPath =>
+        AppContext.BaseDirectory;
 
     public static async Task SafeDeleteFile(string filePath)
     {
