@@ -29,6 +29,6 @@ public class transaction : BaseModel, IEntity
     [Column("parcel_number")]
     public int? ParcelNumber { get; set; }
 
-    [JsonIgnore]
-    public category Category { get; set; }
+    [Reference(typeof(category), useInnerJoin: false)]
+    public category? Category { get; set; } = new();
 }

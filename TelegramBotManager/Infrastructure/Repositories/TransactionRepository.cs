@@ -64,4 +64,22 @@ public class TransactionRepository : BaseRepository<transaction>, ITransactionRe
 
         return response.Models.Sum(t => t.Value);
     }
+
+    public async Task<List<transaction>> GetTransactionsByPeriod(DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
+    {
+        var query =
+            _supabaseClient
+            .From<transaction>()
+            .Select("*")
+            .Filter("date", Operator.GreaterThanOrEqual, startDate.ToString("o"))
+            .Filter("date", Operator.LessThanOrEqual, endDate.ToString("o"));
+
+        var response =
+            await query.Get();
+
+        if (response.Models == null || !response.Models.Any())
+            return new List<transaction>();
+
+        return response.Models;
+    }
 }
