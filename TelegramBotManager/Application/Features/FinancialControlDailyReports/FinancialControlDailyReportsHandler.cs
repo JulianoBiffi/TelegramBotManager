@@ -59,8 +59,7 @@ public class FinancialControlDailyReportsHandler(
 
             var transcationWithCategory =
                 allTransactionsFromMonth
-                .Where(t => t.Category != null)
-                .Select(g => new Tuple<string, double>(g.Category.Description, (double)g.Value))
+                .Select(g => new Tuple<string, double>(g.Category?.Description ?? "Sem categoria", (double)g.Value ))
                 .ToList();
 
         var pieChartPath =
