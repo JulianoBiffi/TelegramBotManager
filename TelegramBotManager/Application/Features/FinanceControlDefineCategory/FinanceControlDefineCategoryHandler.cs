@@ -36,7 +36,18 @@ public class FinanceControlDefineCategoryHandler(
 
         await _TransactionRepository.SaveAsync(transaction, cancellationToken);
 
-        //msg
+        var category =
+            await _CategoryRepository.GetCategory(request.CategoryId.Value, cancellationToken);
+
+        var ammountOfThisCategory =
+            await _TransactionRepository.GetAmmountOfMonth(transaction, cancellationToken, true);
+
+        await _telegramBotClient.PrintNewCategory(
+            _financialControlOptions.AllowedGroup,
+            transaction.Description,
+            category.Description,
+            ammountOfThisCategory);
+
         return Unit.Value;
     }
 }

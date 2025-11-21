@@ -83,6 +83,6 @@ public class TransactionRepository : BaseRepository<transaction>, ITransactionRe
         return response.Models;
     }
 
-    public async Task<transaction> GetTransactionById(int transactionId, CancellationToken cancellationToken)
+    public async Task<transaction> GetTransactionById(long transactionId, CancellationToken cancellationToken)
         => await GetByIdAsync(transactionId, cancellationToken);
 }

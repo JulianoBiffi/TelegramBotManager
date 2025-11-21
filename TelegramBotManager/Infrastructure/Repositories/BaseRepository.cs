@@ -1,5 +1,7 @@
-﻿using Supabase.Postgrest.Models;
+﻿using Supabase.Postgrest;
+using Supabase.Postgrest.Models;
 using static Supabase.Postgrest.Constants;
+using static Supabase.Postgrest.QueryOptions;
 
 namespace TelegramBotManager.Infrastructure.Repositories;
 
@@ -28,7 +30,7 @@ public abstract class BaseRepository<TModel> where TModel : BaseModel, new()
         var response =
             await _supabaseClient.From<TModel>()
                                  .Select("*")
-                                 .Filter("Id", Operator.Equals, id)
+                                 .Filter("id", Operator.Equals, id.ToString())
                                  .Get(cancellationToken: cancellationToken);
 
         return response.Model;
@@ -36,9 +38,11 @@ public abstract class BaseRepository<TModel> where TModel : BaseModel, new()
 
     public async Task<TModel> SaveAsync(TModel entity, CancellationToken cancellationToken)
     {
-        var response = await _supabaseClient.From<TModel>().Insert(entity, cancellationToken: cancellationToken);
+        var response =
+            await _supabaseClient.From<TModel>()
+                                 .Upsert(entity, new QueryOptions { Returning = ReturnType.Representation });
 
-        return entity;
+        return response.Models.FirstOrDefault();
     }
 
     public async Task<TModel> UpdateAsync(TModel entity, CancellationToken cancellationToken)

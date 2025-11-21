@@ -74,6 +74,19 @@ public class FinanceControlMessageReceivedHandler(
                 break;
             case var text when text.Contains("/excluir"):
                 break;
+            case var text when text.Contains("/definircategoria"):
+                var transactionId =
+                    text.TryTakeValueFromString("transactionid");
+
+                var categoryId =
+                    text.TryTakeValueFromString("categoryid");
+
+                if (!transactionId.HasValue || !categoryId.HasValue)
+                    throw new TelegramException($"Id da transação ou category não informada! \n{text}");
+
+                await _mediator.Send(
+                    new FinanceControlDefineCategoryCommand(transactionId.Value, categoryId.Value), cancellationToken);
+                break;
             default:
                 await _telegramBotClient.PrintListOfOptions(_financialControlOptions.AllowedGroup.ToString());
                 break;

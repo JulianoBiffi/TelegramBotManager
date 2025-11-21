@@ -30,7 +30,9 @@ public static class FinancialControlCreateTransactionMapper
         currentDTO.Date = dateText.TryTakeDate();
 
         currentDTO.CreditCard =
-            chunckOfLines[3].Split(':')[1];
+            chunckOfLines[3].Split(':')[1]
+                            .Trim()
+                            .ToUpper();
 
         var valueText =
             chunckOfLines[4].Split(':')[1]

@@ -33,7 +33,14 @@ public static class FinancialControlHelper
                             "    Listagem de lançamentos do mês atual    ",
                             "\n/relatoriomensal\n"
                         ),
-                    }
+                    },
+                    new[]
+                    {
+                        InlineKeyboardButton.WithCallbackData(
+                            "    Teste    ",
+                            "\n/teste\n"
+                        ),
+                    },
                 });
 
         return inlineKeyboard;
@@ -42,7 +49,9 @@ public static class FinancialControlHelper
     public static async Task PrintListOfOptions(
         this TelegramBotClient telegramBotClient,
         string chatId)
-        => await telegramBotClient.SendMessage(chatId, "Opções inválida!", replyMarkup: ListOfOptions());
+    {
+        await telegramBotClient.SendMessage(chatId, "Opções inválida!", replyMarkup: ListOfOptions());
+    }
 
     public static async Task PrintCreateTransaction(
         this TelegramBotClient telegramBotClient,
@@ -104,34 +113,55 @@ public static class FinancialControlHelper
         var message = new StringBuilder();
         message.AppendLine();
 
-        var allButtons = new List<InlineKeyboardButton>();
+        var allButtons = new List<InlineKeyboardButton[]>();
         listOfCategorys.ForEach(category =>
         {
             allButtons.Add(
-                InlineKeyboardButton.WithCallbackData(
+                 new[]
+                 {
+                     InlineKeyboardButton.WithCallbackData(
                         category.Description,
                         $"\n/definircategoria&transactionId={transactionId}&categoryId={category.Id}\n"
-                        ));
+                        ),
+                });
         });
 
+        allButtons.Add(
+            new[]
+            {
+                InlineKeyboardButton.WithSwitchInlineQueryCurrentChat(
+                    "    Cadastro de nova categoria    ",
+                    $"\n/cadastrarcategoria&transactionId={transactionId}\n" +
+                    "Descrição: "
+                    )
+            });
+
         var inlineKeyboard =
-           new InlineKeyboardMarkup(
-               new[]
-               {
-                   allButtons.ToArray(),
-                   new[]
-                   {
-                       InlineKeyboardButton.WithSwitchInlineQueryCurrentChat(
-                            "    Cadastro de nova categoria    ",
-                            $"\n/cadastrarcategoria&transactionId={transactionId}\n" +
-                            "Descrição: "
-                        ),
-                   }
-               });
+           new InlineKeyboardMarkup(allButtons.ToArray());
+
+    await telegramBotClient.SendMessage(
+        chatId, "🔄 *Vincule este lançamento a uma categoria!*",
+        replyMarkup: inlineKeyboard);
+    }
+
+
+    public static async Task PrintNewCategory(
+        this TelegramBotClient telegramBotClient,
+        long chatId,
+        string transactionDescription,
+        string categoryDescription,
+        decimal ammountOfThisCategory)
+    {
+        var message = new StringBuilder();
+        message.AppendLine("🔄 *Lançamento vinculado com sucesso!*");
+        message.AppendLine($"📝 *Descrição da compra:* {transactionDescription}");
+        message.AppendLine($"🏷️ *Categoria:* {categoryDescription}");
+        message.Append($"📈 *Total da categoria:* R$ {ammountOfThisCategory:N2}");
 
         await telegramBotClient.SendMessage(
-            chatId, "🔄 *Vincule este lançamento a uma categoria!*",
-            replyMarkup: inlineKeyboard);
+            chatId,
+            message.ToString(),
+            parseMode: ParseMode.Markdown);
     }
 
     private static InlineKeyboardButton CreateTransaction()

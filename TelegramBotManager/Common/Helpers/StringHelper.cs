@@ -1,12 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 
 namespace TelegramBotManager.Common.Helpers;
 
-public class StringHelper
+public static class StringHelper
 {
+    public static long? TryTakeValueFromString(this string source, string fieldname)
+    {
+        var transactionMatch =
+            Regex.Match(source.ToLower(), $@"{fieldname.ToLower()}=(\d+)", RegexOptions.IgnoreCase);
 
+        return
+            long.TryParse(transactionMatch.Groups[1].Value, out long value)
+            ? value
+            : null;
+    }
 }
