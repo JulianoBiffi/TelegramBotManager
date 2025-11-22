@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Supabase;
+using System.Threading;
 using TelegramBotManager.Common.Helpers;
 using TelegramBotManager.Domain.Entities.FinancialControl;
 using TelegramBotManager.Domain.Interfaces;
@@ -17,7 +18,11 @@ public class TransactionRepository : BaseRepository<transaction>, ITransactionRe
         => await GetAllAsync(cancellationToken);
 
     public async Task<transaction> SaveAsync(transaction transaction, CancellationToken cancellationToken)
-        => await base.SaveAsync(transaction, cancellationToken);
+    {
+        return transaction.Id > 0
+            ? await base.UpdateAsync(transaction, cancellationToken)
+            : await base.InsertAsync(transaction, cancellationToken);
+    }
 
     public async Task<transaction> SaveAsync(string transactionDescription, CancellationToken cancellationToken)
     {

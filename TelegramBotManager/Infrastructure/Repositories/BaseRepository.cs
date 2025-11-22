@@ -1,4 +1,5 @@
-﻿using Supabase.Postgrest;
+﻿using Microsoft.Extensions.Azure;
+using Supabase.Postgrest;
 using Supabase.Postgrest.Models;
 using static Supabase.Postgrest.Constants;
 using static Supabase.Postgrest.QueryOptions;
@@ -36,20 +37,21 @@ public abstract class BaseRepository<TModel> where TModel : BaseModel, new()
         return response.Model;
     }
 
-    public async Task<TModel> SaveAsync(TModel entity, CancellationToken cancellationToken)
+    public async Task<TModel> InsertAsync(TModel entity, CancellationToken cancellationToken)
     {
         var response =
             await _supabaseClient.From<TModel>()
-                                 .Upsert(entity, new QueryOptions { Returning = ReturnType.Representation });
+                                 .Insert(entity, new QueryOptions { Returning = ReturnType.Representation });
 
         return response.Models.FirstOrDefault();
     }
 
     public async Task<TModel> UpdateAsync(TModel entity, CancellationToken cancellationToken)
     {
-        var response = await _supabaseClient.From<TModel>().Upsert(entity, cancellationToken: cancellationToken);
+        var response =
+            await entity.Update<TModel>();
 
-        return entity;
+        return response.Models.FirstOrDefault();
     }
 
     public async Task DeleteAsync(long id, CancellationToken cancellationToken)

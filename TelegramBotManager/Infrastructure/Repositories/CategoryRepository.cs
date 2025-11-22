@@ -17,7 +17,11 @@ public class CategoryRepository : BaseRepository<category>, ICategoryRepository
         => await GetByIdAsync(id, cancellationToken);
 
     public async Task<category> SaveAsync(category category, CancellationToken cancellationToken)
-        => await base.SaveAsync(category, cancellationToken);
+    { 
+        return category.Id > 0
+            ? await base.UpdateAsync(category, cancellationToken)
+            : await base.InsertAsync(category, cancellationToken);
+    }
 
     public async Task<category> GetCategoryByTranscationDesciption(
         string transactionDescription)
