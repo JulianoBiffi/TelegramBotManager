@@ -15,7 +15,7 @@ public class FinanceControlCreateTransactionResult
 
     public string Description { get; set; }
 
-    public category Category { get; set; }
+    public Category Category { get; set; }
 
     public int? ParcelNumber { get; set; }
 

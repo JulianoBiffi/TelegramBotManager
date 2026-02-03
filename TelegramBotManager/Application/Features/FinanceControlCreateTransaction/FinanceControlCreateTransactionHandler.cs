@@ -2,6 +2,7 @@
 using MediatR;
 using TelegramBotManager.Application.Mappers;
 using TelegramBotManager.Domain.Interfaces;
+using TelegramBotManager.Domain.Entities.FinancialControl;
 
 namespace TelegramBotManager.Application.FinancialControl.FinanceControlCreateTransaction;
 
@@ -28,39 +29,24 @@ public class FinanceControlCreateTransactionHandler(
         var tryToFindCategory =
             await _CategoryRepository.GetCategoryByTranscationDesciption(currentDto.Description);
 
-        var savedTransaction =
-            await _TransactionRepository.SaveAsync(
-                new Domain.Entities.FinancialControl.transaction()
-                {
-                    CreditCard = currentDto.CreditCard,
-                    Description = currentDto.Description + (currentDto.ParcelNumber.HasValue ? $" (Parcelado em {currentDto.ParcelNumber})" : string.Empty),
-                    Date = currentDto.Date,
-                    Value = currentDto.Value,
-                    CategoryId = tryToFindCategory?.Id,
-                    ParcelNumber = currentDto.ParcelNumber.HasValue ? 1 : null
-                },
-                cancellationToken);
+        // Domain Logic: Create transactions (including logic for parcels)
+        var transactions = Transaction.CreateInstallments(
+            currentDto.Description,
+            currentDto.Value,
+            currentDto.Date,
+            currentDto.CreditCard,
+            tryToFindCategory,
+            currentDto.ParcelNumber);
 
-        if (currentDto.ParcelNumber.HasValue)
+        Transaction savedTransaction = null;
+
+        // Persist all generated transactions
+        foreach (var transaction in transactions)
         {
-            //TODO: Should consider the credit card closing date !!
-
-            for (int parcelNumber = 1; parcelNumber < currentDto.ParcelNumber.Value; parcelNumber++)
+            var saved = await _TransactionRepository.SaveAsync(transaction, cancellationToken);
+            if (savedTransaction == null) 
             {
-                var parcelDate =
-                    currentDto.Date.AddMonths(parcelNumber);
-
-                await _TransactionRepository.SaveAsync(
-                    new Domain.Entities.FinancialControl.transaction()
-                    {
-                        CreditCard = savedTransaction.CreditCard,
-                        Description = currentDto.Description + (currentDto.ParcelNumber.HasValue ? $" (Parcela {parcelNumber + 1}/{currentDto.ParcelNumber})" : string.Empty),
-                        Date = parcelDate,
-                        Value = savedTransaction.Value,
-                        CategoryId = savedTransaction.CategoryId,
-                        ParcelNumber = parcelNumber + 1
-                    },
-                    cancellationToken);
+                savedTransaction = saved;
             }
         }
 

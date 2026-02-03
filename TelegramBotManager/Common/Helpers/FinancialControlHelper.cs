@@ -108,7 +108,7 @@ public static class FinancialControlHelper
         this TelegramBotClient telegramBotClient,
         long chatId,
         long transactionId,
-        List<category> listOfCategorys)
+        List<Category> listOfCategorys)
     {
         var message = new StringBuilder();
         message.AppendLine();

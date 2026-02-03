@@ -1,34 +1,84 @@
-﻿using Newtonsoft.Json;
-using Supabase.Postgrest.Attributes;
-using Supabase.Postgrest.Models;
-using TelegramBotManager.Domain.Interfaces;
+﻿using TelegramBotManager.Domain.Interfaces;
 
 namespace TelegramBotManager.Domain.Entities.FinancialControl;
 
-[Table("transaction")]
-public class transaction : BaseModel, IEntity
+public class Transaction : IEntity
 {
-    [PrimaryKey("id", false)]
-    public long Id { get; set; }
+    public long Id { get; private set; }
+    public DateTime Date { get; private set; }
+    public string CreditCard { get; private set; }
+    public decimal Value { get; private set; }
+    public string Description { get; private set; }
+    public long? CategoryId { get; private set; }
+    public int? ParcelNumber { get; private set; }
+    public Category? Category { get; private set; }
 
-    [Column("date")]
-    public DateTime Date { get; set; }
+    protected Transaction() { }
 
-    [Column("credit_card")]
-    public string CreditCard { get; set; }
+    public Transaction(string description, decimal value, DateTime date, string creditCard, long? categoryId, int? parcelNumber)
+    {
+        // Simple validation
+        if (string.IsNullOrWhiteSpace(description)) throw new ArgumentNullException(nameof(description));
+        if (value <= 0) throw new ArgumentException("Value must be greater than zero", nameof(value));
 
-    [Column("value")]
-    public decimal Value { get; set; }
+        Description = description;
+        Value = value;
+        Date = date;
+        CreditCard = creditCard;
+        CategoryId = categoryId;
+        ParcelNumber = parcelNumber;
+    }
 
-    [Column("description")]
-    public string Description { get; set; }
+    public void SetCategory(Category category)
+    {
+        Category = category;
+        CategoryId = category?.Id;
+    }
 
-    [Column("category_id")]
-    public long? CategoryId { get; set; }
+    public void SetId(long id)
+    {
+        Id = id;
+    }
 
-    [Column("parcel_number")]
-    public int? ParcelNumber { get; set; }
+    public static List<Transaction> CreateInstallments(
+        string baseDescription,
+        decimal value,
+        DateTime firstDate,
+        string creditCard,
+        Category? category,
+        int? numberOfInstallments)
+    {
+        var transactions = new List<Transaction>();
+        var categoryId = category?.Id;
 
-    [Reference(typeof(category), useInnerJoin: false)]
-    public category? Category { get; set; } = new();
+        if (!numberOfInstallments.HasValue || numberOfInstallments.Value <= 1)
+        {
+            // Single transaction
+            var t = new Transaction(baseDescription, value, firstDate, creditCard, categoryId, null);
+            if (category != null) t.SetCategory(category);
+            transactions.Add(t);
+            return transactions;
+        }
+
+        // Installments
+        var total = numberOfInstallments.Value;
+
+        // First
+        var firstDesc = $"{baseDescription} (Parcelado em {total})";
+        var first = new Transaction(firstDesc, value, firstDate, creditCard, categoryId, 1);
+        if (category != null) first.SetCategory(category);
+        transactions.Add(first);
+
+        // Others
+        for (int i = 1; i < total; i++)
+        {
+            var date = firstDate.AddMonths(i);
+            var desc = $"{baseDescription} (Parcela {i + 1}/{total})";
+            var t = new Transaction(desc, value, date, creditCard, categoryId, i + 1);
+            if (category != null) t.SetCategory(category);
+            transactions.Add(t);
+        }
+
+        return transactions;
+    }
 }

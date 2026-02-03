@@ -4,38 +4,37 @@ using System.Threading;
 using TelegramBotManager.Common.Helpers;
 using TelegramBotManager.Domain.Entities.FinancialControl;
 using TelegramBotManager.Domain.Interfaces;
+using TelegramBotManager.Infrastructure.Persistence.Models;
+using TelegramBotManager.Infrastructure.Repositories.Mappers;
 using static Supabase.Postgrest.Constants;
 
 namespace TelegramBotManager.Infrastructure.Repositories;
 
-public class TransactionRepository : BaseRepository<transaction>, ITransactionRepository
+public class TransactionRepository : BaseRepository<TransactionModel>, ITransactionRepository
 {
     public TransactionRepository(Client supabaseClient) : base(supabaseClient)
     {
     }
 
-    public async Task<List<transaction>> GetTransactions(CancellationToken cancellationToken)
-        => await GetAllAsync(cancellationToken);
-
-    public async Task<transaction> SaveAsync(transaction transaction, CancellationToken cancellationToken)
+    public async Task<List<Transaction>> GetTransactions(CancellationToken cancellationToken)
     {
-        return transaction.Id > 0
-            ? await base.UpdateAsync(transaction, cancellationToken)
-            : await base.InsertAsync(transaction, cancellationToken);
+        var models = await GetAllAsync(cancellationToken);
+        return models.Select(TransactionMapper.ToDomain).ToList();
     }
 
-    public async Task<transaction> SaveAsync(string transactionDescription, CancellationToken cancellationToken)
+    public async Task<Transaction> SaveAsync(Transaction transaction, CancellationToken cancellationToken)
     {
-        return
-            (await _supabaseClient.From<transaction>()
-                                 .Select("*")
-                                 .Filter(nameof(transaction.Description), Operator.Like, transactionDescription)
-                                 .Get(cancellationToken: cancellationToken))
-                                 .Model;
+        var model = TransactionMapper.ToModel(transaction);
+
+        var result = model.Id > 0
+            ? await base.UpdateAsync(model, cancellationToken)
+            : await base.InsertAsync(model, cancellationToken);
+
+        return TransactionMapper.ToDomain(result);
     }
 
     public async Task<decimal> GetAmmountOfMonth(
-        transaction transaction,
+        Transaction transaction,
         CancellationToken cancellationToken,
         bool filterByCategory = false)
     {
@@ -44,7 +43,7 @@ public class TransactionRepository : BaseRepository<transaction>, ITransactionRe
 
         var query =
             _supabaseClient
-            .From<transaction>()
+            .From<TransactionModel>()
             .Select("value")
             .Filter("date", Operator.GreaterThanOrEqual, startDate)
             .Filter("date", Operator.LessThanOrEqual, endDate);
@@ -58,7 +57,7 @@ public class TransactionRepository : BaseRepository<transaction>, ITransactionRe
                 query = query.Filter("category_id", Operator.Equals, categoryId);
             }
             else
-                query = query.Filter<transaction>("category_id", Operator.Is, null);
+                query = query.Filter<TransactionModel>("category_id", Operator.Is, null);
         }
 
         var response =
@@ -70,11 +69,11 @@ public class TransactionRepository : BaseRepository<transaction>, ITransactionRe
         return response.Models.Sum(t => t.Value);
     }
 
-    public async Task<List<transaction>> GetTransactionsByPeriod(DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
+    public async Task<List<Transaction>> GetTransactionsByPeriod(DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
     {
         var query =
             _supabaseClient
-            .From<transaction>()
+            .From<TransactionModel>()
             .Select("*")
             .Filter("date", Operator.GreaterThanOrEqual, startDate.ToString("o"))
             .Filter("date", Operator.LessThanOrEqual, endDate.ToString("o"));
@@ -83,11 +82,14 @@ public class TransactionRepository : BaseRepository<transaction>, ITransactionRe
             await query.Get();
 
         if (response.Models == null || !response.Models.Any())
-            return new List<transaction>();
+            return new List<Transaction>();
 
-        return response.Models;
+        return response.Models.Select(TransactionMapper.ToDomain).ToList();
     }
 
-    public async Task<transaction> GetTransactionById(long transactionId, CancellationToken cancellationToken)
-        => await GetByIdAsync(transactionId, cancellationToken);
+    public async Task<Transaction> GetTransactionById(long transactionId, CancellationToken cancellationToken)
+    {
+        var model = await GetByIdAsync(transactionId, cancellationToken);
+        return TransactionMapper.ToDomain(model);
+    }
 }

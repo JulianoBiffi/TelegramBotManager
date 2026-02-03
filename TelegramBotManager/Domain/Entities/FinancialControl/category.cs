@@ -1,15 +1,22 @@
-﻿using Supabase.Postgrest.Attributes;
-using Supabase.Postgrest.Models;
-using TelegramBotManager.Domain.Interfaces;
+﻿using TelegramBotManager.Domain.Interfaces;
 
 namespace TelegramBotManager.Domain.Entities.FinancialControl;
 
-[Table("category")]
-public class category : BaseModel, IEntity
+public class Category : IEntity
 {
-    [PrimaryKey("id", false)]
-    public long Id { get; set; }
+    public long Id { get; private set; }
+    public string Description { get; private set; }
 
-    [Column("description")]
-    public string Description { get; set; }
+    protected Category() { }
+
+    public Category(string description)
+    {
+        if (string.IsNullOrWhiteSpace(description)) throw new ArgumentNullException(nameof(description));
+        Description = description;
+    }
+
+    public void SetId(long id)
+    {
+        Id = id;
+    }
 }

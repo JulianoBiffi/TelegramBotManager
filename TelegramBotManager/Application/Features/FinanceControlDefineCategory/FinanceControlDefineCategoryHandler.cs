@@ -32,12 +32,12 @@ public class FinanceControlDefineCategoryHandler(
         var transaction =
             await _TransactionRepository.GetTransactionById(request.TransactionId, cancellationToken);
 
-        transaction.CategoryId = request.CategoryId;
-
-        await _TransactionRepository.SaveAsync(transaction, cancellationToken);
-
         var category =
             await _CategoryRepository.GetCategory(request.CategoryId.Value, cancellationToken);
+
+        transaction.SetCategory(category);
+
+        await _TransactionRepository.SaveAsync(transaction, cancellationToken);
 
         var ammountOfThisCategory =
             await _TransactionRepository.GetAmmountOfMonth(transaction, cancellationToken, true);
