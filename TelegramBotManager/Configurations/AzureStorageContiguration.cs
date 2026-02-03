@@ -31,5 +31,17 @@ public static class AzureStorageContiguration
                     MessageEncoding = QueueMessageEncoding.Base64
                 });
         });
+
+
+        services.AddKeyedSingleton("FinancialMessageQueueClient", (sp, key) =>
+        {
+            return new QueueClient(
+                azureStorageConnection,
+                "financial-control-messages",
+                new QueueClientOptions
+                {
+                    MessageEncoding = QueueMessageEncoding.Base64
+                });
+        });
     }
 }
