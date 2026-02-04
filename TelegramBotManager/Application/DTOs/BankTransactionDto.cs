@@ -6,8 +6,6 @@ public class BankTransactionDto
     public decimal Value { get; set; }
     public DateTime Date { get; set; }
     public string CreditCard { get; set; }
-    public string TransactionType { get; set; } // "purchase", "refund", "payment"
-    public string BankSource { get; set; } // "nubank", "porto", "bb", "googlewallet"
+    public string BankSource { get; set; }
     public bool IsValid { get; set; }
-    public string RawMessage { get; set; }
 }
