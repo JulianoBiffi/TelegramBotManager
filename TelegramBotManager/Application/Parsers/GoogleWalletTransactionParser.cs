@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 using TelegramBotManager.Application.DTOs;
 using TelegramBotManager.Application.Interfaces;
 
@@ -14,12 +15,22 @@ public class GoogleWalletTransactionParser : IBankTransactionParser
         if (string.IsNullOrEmpty(message))
             return false;
 
-        var lowerMessage = message.ToLower();
-        return (lowerMessage.Contains("google pay") || lowerMessage.Contains("google wallet") || lowerMessage.Contains("gpay")) &&
-               (lowerMessage.Contains("pagamento") ||
-                lowerMessage.Contains("payment") ||
-                lowerMessage.Contains("transação") ||
-                lowerMessage.Contains("transaction"));
+        string textToSearch = message.ToLower();
+        try
+        {
+            var json = JObject.Parse(message);
+            textToSearch = (json["texto_completo"]?.ToString() ?? json["texto"]?.ToString() ?? message).ToLower();
+            if (json["titulo"]?.ToString()?.ToLower().Contains("google") == true || 
+                json["package"]?.ToString()?.Contains("google") == true)
+                return true;
+        }
+        catch { }
+
+        return (textToSearch.Contains("google pay") || textToSearch.Contains("google wallet") || textToSearch.Contains("gpay")) &&
+               (textToSearch.Contains("pagamento") ||
+                textToSearch.Contains("payment") ||
+                textToSearch.Contains("transação") ||
+                textToSearch.Contains("transaction"));
     }
 
     public BankTransactionDto Parse(string message)
@@ -27,15 +38,25 @@ public class GoogleWalletTransactionParser : IBankTransactionParser
         var dto = new BankTransactionDto
         {
             BankSource = "googlewallet",
-            RawMessage = message,
-            IsValid = false,
-            TransactionType = "purchase"
+            IsValid = false
         };
+
+        string textToParse = message;
+        long timestamp = 0;
+
+        try
+        {
+            var json = JObject.Parse(message);
+            textToParse = json["texto_completo"]?.ToString() ?? json["texto"]?.ToString() ?? message;
+            if (json["timestamp"] != null)
+                timestamp = (long)json["timestamp"];
+        }
+        catch { }
 
         try
         {
             // Extrair valor - Google Wallet pode usar $ ou R$
-            var valueMatch = Regex.Match(message, @"(?:R\$|\$)\s?([0-9.,]+)");
+            var valueMatch = Regex.Match(textToParse, @"(?:R\$|\$)\s?([0-9.,]+)");
             if (valueMatch.Success)
             {
                 var valueStr = valueMatch.Groups[1].Value.Replace(".", "").Replace(",", ".");
@@ -53,7 +74,7 @@ public class GoogleWalletTransactionParser : IBankTransactionParser
 
             foreach (var pattern in descriptionPatterns)
             {
-                var descMatch = Regex.Match(message, pattern, RegexOptions.IgnoreCase);
+                var descMatch = Regex.Match(textToParse, pattern, RegexOptions.IgnoreCase);
                 if (descMatch.Success)
                 {
                     dto.Description = descMatch.Groups[1].Value.Trim();
@@ -64,7 +85,7 @@ public class GoogleWalletTransactionParser : IBankTransactionParser
             // Se não encontrou descrição, tentar pegar primeira linha não vazia após o header
             if (string.IsNullOrEmpty(dto.Description))
             {
-                var lines = message.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                var lines = textToParse.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var line in lines)
                 {
                     if (!line.ToLower().Contains("google") && 
@@ -89,7 +110,7 @@ public class GoogleWalletTransactionParser : IBankTransactionParser
             string cardEnding = null;
             foreach (var pattern in cardPatterns)
             {
-                var cardMatch = Regex.Match(message, pattern, RegexOptions.IgnoreCase);
+                var cardMatch = Regex.Match(textToParse, pattern, RegexOptions.IgnoreCase);
                 if (cardMatch.Success)
                 {
                     cardEnding = cardMatch.Groups[1].Value;
@@ -101,7 +122,16 @@ public class GoogleWalletTransactionParser : IBankTransactionParser
                 ? $"Google Wallet (*{cardEnding})" 
                 : "Google Wallet";
 
-            dto.Date = DateTime.Now;
+            // Data
+            if (timestamp > 0)
+            {
+                dto.Date = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).DateTime;
+            }
+            else
+            {
+                dto.Date = DateTime.Now;
+            }
+
             dto.IsValid = dto.Value > 0 && !string.IsNullOrEmpty(dto.Description);
         }
         catch

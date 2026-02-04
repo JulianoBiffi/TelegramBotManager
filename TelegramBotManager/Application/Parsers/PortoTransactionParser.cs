@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 using TelegramBotManager.Application.DTOs;
 using TelegramBotManager.Application.Interfaces;
 
@@ -14,12 +15,21 @@ public class PortoTransactionParser : IBankTransactionParser
         if (string.IsNullOrEmpty(message))
             return false;
 
-        var lowerMessage = message.ToLower();
-        return (lowerMessage.Contains("porto") || lowerMessage.Contains("porto seguro")) &&
-               (lowerMessage.Contains("compra aprovada") ||
-                lowerMessage.Contains("transação") ||
-                lowerMessage.Contains("pagamento") ||
-                lowerMessage.Contains("estorno"));
+        string textToSearch = message.ToLower();
+        try
+        {
+            var json = JObject.Parse(message);
+            textToSearch = (json["texto_completo"]?.ToString() ?? json["texto"]?.ToString() ?? message).ToLower();
+            if (json["titulo"]?.ToString()?.ToLower().Contains("porto") == true)
+                return true;
+        }
+        catch { }
+
+        return (textToSearch.Contains("porto") || textToSearch.Contains("porto seguro")) &&
+               (textToSearch.Contains("compra aprovada") ||
+                textToSearch.Contains("transação") ||
+                textToSearch.Contains("pagamento") ||
+                textToSearch.Contains("estorno"));
     }
 
     public BankTransactionDto Parse(string message)
@@ -27,28 +37,25 @@ public class PortoTransactionParser : IBankTransactionParser
         var dto = new BankTransactionDto
         {
             BankSource = "porto",
-            RawMessage = message,
             IsValid = false
         };
 
+        string textToParse = message;
+        long timestamp = 0;
+
         try
         {
-            // Detectar tipo de transação
-            if (message.ToLower().Contains("estorno"))
-            {
-                dto.TransactionType = "refund";
-            }
-            else if (message.ToLower().Contains("compra") || message.ToLower().Contains("transação"))
-            {
-            dto.TransactionType = "purchase";
-            }
-            else if (message.ToLower().Contains("pagamento"))
-            {
-                dto.TransactionType = "payment";
-            }
+            var json = JObject.Parse(message);
+            textToParse = json["texto_completo"]?.ToString() ?? json["texto"]?.ToString() ?? message;
+            if (json["timestamp"] != null)
+                timestamp = (long)json["timestamp"];
+        }
+        catch { }
 
+        try
+        {
             // Extrair valor
-            var valueMatch = Regex.Match(message, @"R\$\s?([0-9.,]+)");
+            var valueMatch = Regex.Match(textToParse, @"R\$\s?([0-9.,]+)");
             if (valueMatch.Success)
             {
                 var valueStr = valueMatch.Groups[1].Value.Replace(".", "").Replace(",", ".");
@@ -65,7 +72,7 @@ public class PortoTransactionParser : IBankTransactionParser
 
             foreach (var pattern in descriptionPatterns)
             {
-                var descMatch = Regex.Match(message, pattern, RegexOptions.IgnoreCase);
+                var descMatch = Regex.Match(textToParse, pattern, RegexOptions.IgnoreCase);
                 if (descMatch.Success)
                 {
                     dto.Description = descMatch.Groups[1].Value.Trim();
@@ -75,20 +82,29 @@ public class PortoTransactionParser : IBankTransactionParser
 
             if (string.IsNullOrEmpty(dto.Description))
             {
-                var lines = message.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                var lines = textToParse.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
                 if (lines.Length > 1)
                     dto.Description = lines[1].Trim();
             }
 
             // Detectar cartão
-            if (message.ToLower().Contains("crédito"))
+            if (textToParse.ToLower().Contains("crédito"))
                 dto.CreditCard = "Porto Credito";
-            else if (message.ToLower().Contains("débito"))
+            else if (textToParse.ToLower().Contains("débito"))
                 dto.CreditCard = "Porto Debito";
             else
                 dto.CreditCard = "Porto";
 
-            dto.Date = DateTime.Now;
+            // Data
+            if (timestamp > 0)
+            {
+                dto.Date = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).DateTime;
+            }
+            else
+            {
+                dto.Date = DateTime.Now;
+            }
+
             dto.IsValid = dto.Value > 0 && !string.IsNullOrEmpty(dto.Description);
         }
         catch
