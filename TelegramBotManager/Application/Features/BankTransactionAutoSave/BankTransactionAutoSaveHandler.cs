@@ -71,7 +71,7 @@ public class BankTransactionAutoSaveHandler(
             if (exists)
             {
                 _logger.LogInformation($"Transação duplicada ignorada: {bankTransaction.Description} - R$ {bankTransaction.Value}");
-                result.Success = true; // Considera sucesso para não reprocessar
+                result.Success = true;
                 result.IsDuplicate = true;
                 result.Message = "Transação já cadastrada anteriormente";
                 return result;
@@ -150,9 +150,8 @@ public class BankTransactionAutoSaveHandler(
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao processar transação bancária automaticamente");
-            result.Success = false; // Garante que retorna erro
+            result.Success = false;
             result.ErrorMessage = ex.Message;
-            // A exceção será capturada no Message.cs e logada, mas retornamos o result com erro
         }
 
         return result;
