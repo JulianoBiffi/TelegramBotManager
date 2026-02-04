@@ -1,6 +1,12 @@
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Telegram.Bot;
+using TelegramBotManager.Application.Features.FinanceControlDefineCategory;
+using TelegramBotManager.Application.FinancialControl.FinanceControlCreateTransaction;
 using TelegramBotManager.Application.Interfaces;
+using TelegramBotManager.Common.Helpers;
+using TelegramBotManager.Configurations;
 using TelegramBotManager.Domain.Entities.FinancialControl;
 using TelegramBotManager.Domain.Interfaces;
 
@@ -10,6 +16,9 @@ public class BankTransactionAutoSaveHandler(
     IEnumerable<IBankTransactionParser> _parsers,
     ITransactionRepository _transactionRepository,
     ICategoryRepository _categoryRepository,
+    FinancialControlOptions _financialControlOptions,
+    IMediator _mediator,
+    [FromKeyedServices("FinancialControl")] TelegramBotClient _telegramBotClient,
     ILogger<BankTransactionAutoSaveHandler> _logger) : IRequestHandler<BankTransactionAutoSaveCommand, BankTransactionAutoSaveResult>
 {
     public async Task<BankTransactionAutoSaveResult> Handle(
@@ -62,7 +71,7 @@ public class BankTransactionAutoSaveHandler(
             if (exists)
             {
                 _logger.LogInformation($"Transação duplicada ignorada: {bankTransaction.Description} - R$ {bankTransaction.Value}");
-                result.Success = true;
+                result.Success = true; // Considera sucesso para não reprocessar
                 result.IsDuplicate = true;
                 result.Message = "Transação já cadastrada anteriormente";
                 return result;
@@ -71,22 +80,59 @@ public class BankTransactionAutoSaveHandler(
             // Tentar encontrar categoria automaticamente
             var category = await _categoryRepository.GetCategoryByTranscationDesciption(bankTransaction.Description);
 
-            // Criar a transação
-            var transaction = new Transaction(
+            // Criar a transação (incluindo lógica de parcelamento se aplicável, por enquanto sem parcelamento no parser)
+            // Futuramente os parsers podem retornar ParcelNumber se a mensagem tiver essa info
+            int? parcelNumber = null; 
+            
+            var transactions = Transaction.CreateInstallments(
                 bankTransaction.Description,
                 bankTransaction.Value,
                 bankTransaction.Date,
                 bankTransaction.CreditCard,
-                category?.Id,
-                null); // Parcelamento não é detectado automaticamente
+                category,
+                parcelNumber);
 
-            if (category != null)
-                transaction.SetCategory(category);
+            Transaction savedTransaction = null;
 
-            // Salvar no banco de dados
-            var savedTransaction = await _transactionRepository.SaveAsync(transaction, cancellationToken);
+            // Persist all generated transactions
+            foreach (var transaction in transactions)
+            {
+                var saved = await _transactionRepository.SaveAsync(transaction, cancellationToken);
+                if (savedTransaction == null) 
+                {
+                    savedTransaction = saved;
+                }
+            }
 
             _logger.LogInformation($"Transação salva automaticamente: {savedTransaction.Description} - R$ {savedTransaction.Value}");
+
+            // Obter valores atualizados para retorno
+            var ammountOfMonth =
+                await _transactionRepository.GetAmmountOfMonth(savedTransaction, cancellationToken);
+
+            var ammountOfThisCategory = category != null ?
+                await _transactionRepository.GetAmmountOfMonth(savedTransaction, cancellationToken, true) : 0;
+
+            var createResult = new FinanceControlCreateTransactionResult()
+            {
+                Description = savedTransaction.Description,
+                CreditCard = savedTransaction.CreditCard,
+                Date = savedTransaction.Date,
+                Id = savedTransaction.Id,
+                Value = savedTransaction.Value,
+                Category = category,
+                AmmountOfMonth = ammountOfMonth,
+                AmmountOfThisCategory = ammountOfThisCategory
+            };
+
+            // Notificar no Telegram
+            await _telegramBotClient.PrintCreatedTransaction(_financialControlOptions.AllowedGroup, createResult);
+
+            // Se não tem categoria, solicitar definição
+            if (createResult.Category == null)
+            {
+                await _mediator.Send(new FinanceControlDefineCategoryCommand(createResult.Id), cancellationToken);
+            }
 
             // Montar o resultado
             result.Success = true;
@@ -98,19 +144,15 @@ public class BankTransactionAutoSaveHandler(
             result.Category = category;
             result.BankSource = bankTransaction.BankSource;
             result.Message = $"Transação cadastrada automaticamente via {matchedParser.BankName}";
-
-            // Obter valores do mês
-            result.AmmountOfMonth = await _transactionRepository.GetAmmountOfMonth(savedTransaction, cancellationToken);
-            
-            if (category != null)
-            {
-                result.AmmountOfThisCategory = await _transactionRepository.GetAmmountOfMonth(savedTransaction, cancellationToken, true);
-            }
+            result.AmmountOfMonth = ammountOfMonth;
+            result.AmmountOfThisCategory = ammountOfThisCategory;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao processar transação bancária automaticamente");
+            result.Success = false; // Garante que retorna erro
             result.ErrorMessage = ex.Message;
+            // A exceção será capturada no Message.cs e logada, mas retornamos o result com erro
         }
 
         return result;
