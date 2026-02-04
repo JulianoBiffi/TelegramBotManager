@@ -6,6 +6,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using TelegramBotManager.Application.DTOs;
 using TelegramBotManager.Application.Features.BankTransactionAutoSave;
 using TelegramBotManager.Common.Helpers;
@@ -48,20 +49,36 @@ public class Message(
 
         try
         {
-            // Deserializar para verificar se é uma mensagem de texto
-            var update = JsonConvert.DeserializeObject<TelegramUpdateDto>(requestBody, 
-                new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+            bool isHandled = false;
+            string messageToParse = string.Empty;
+            bool isNotificationJson = false;
 
-            var messageText = update?.Message?.Text;
-
-            // Se houver texto na mensagem, tentar processar como transação bancária
-            if (!string.IsNullOrEmpty(messageText))
+            // Verificar se é o JSON de notificação (tem "package" ou "texto")
+            if (requestBody.Contains("\"package\"") || requestBody.Contains("\"texto\""))
             {
-                _logger.LogInformation("Tentando processar como transação bancária...");
+                messageToParse = requestBody;
+                isNotificationJson = true;
+            }
+            else
+            {
+                // Tentar deserializar como TelegramUpdate
+                var update = JsonConvert.DeserializeObject<TelegramUpdateDto>(requestBody, 
+                    new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+
+                if (!string.IsNullOrEmpty(update?.Message?.Text))
+                {
+                    messageToParse = update.Message.Text;
+                }
+            }
+
+            // Se identificamos um conteúdo passível de ser transação
+            if (!string.IsNullOrEmpty(messageToParse))
+            {
+                _logger.LogInformation($"Tentando processar mensagem (Tipo Notificação: {isNotificationJson})...");
 
                 var autoSaveCommand = new BankTransactionAutoSaveCommand
                 {
-                    MessageBody = messageText
+                    MessageBody = messageToParse
                 };
 
                 var autoSaveResult = await _mediator.Send(autoSaveCommand, cancellationToken);
@@ -69,15 +86,13 @@ public class Message(
                 if (autoSaveResult.Success)
                 {
                     _logger.LogInformation($"Transação bancária processada automaticamente: {autoSaveResult.Message}");
-                    
-                    // Não enfileirar se foi processada com sucesso como transação bancária
-                    // A menos que precise notificar o usuário (pode ser implementado aqui)
-                    return new OkResult();
+                    isHandled = true;
                 }
-                else
-                {
-                    _logger.LogInformation("Mensagem não identificada como transação bancária, enfileirando para processamento normal");
-                }
+            }
+
+            if (isHandled)
+            {
+                return new OkResult();
             }
         }
         catch (Exception ex)
@@ -86,6 +101,9 @@ public class Message(
         }
 
         // Se não foi processado como transação bancária, enfileirar normalmente
+        // Nota: Se for o JSON de notificação e falhar o processamento, ele vai pra fila.
+        // O handler da fila espera TelegramUpdateDto, então vai falhar lá também ou ser ignorado.
+        // Mas garantimos o fluxo original.
         var message =
             await _financialQueueClient.SendMessageAsync(requestBody, cancellationToken);
 
