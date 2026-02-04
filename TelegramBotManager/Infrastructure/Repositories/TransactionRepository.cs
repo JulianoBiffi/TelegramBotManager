@@ -1,4 +1,4 @@
-﻿using Azure;
+using Azure;
 using Supabase;
 using System.Threading;
 using TelegramBotManager.Common.Helpers;
@@ -91,5 +91,30 @@ public class TransactionRepository : BaseRepository<TransactionModel>, ITransact
     {
         var model = await GetByIdAsync(transactionId, cancellationToken);
         return TransactionMapper.ToDomain(model);
+    }
+
+    public async Task<bool> TransactionExists(DateTime date, decimal value, string description, CancellationToken cancellationToken)
+    {
+        // Define uma janela de tempo para considerar duplicidade (ex: mesmo segundo exato)
+        // Como o parser pode retornar a data exata do timestamp, usamos ela.
+        // Convertendo para formato compatível com o filtro (ISO 8601 string)
+        
+        var dateStr = date.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+        
+        // Supabase/Postgrest filter syntax
+        var query = _supabaseClient
+            .From<TransactionModel>()
+            .Select("id")
+            .Filter("value", Operator.Equals, value.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Filter("date", Operator.Equals, dateStr);
+            
+        // Adiciona filtro por descrição (like/ilike pode ser mais flexível, mas equals é mais seguro para evitar falsos positivos se a descrição vier exata)
+        // Se a descrição for longa ou variar, pode ser melhor usar ILike ou verificar apenas parte dela.
+        // Dado que vem de notificação automática, assumimos que o texto será consistente.
+        query = query.Filter("description", Operator.Equals, description);
+
+        var result = await query.Get();
+
+        return result.Models != null && result.Models.Any();
     }
 }
