@@ -63,8 +63,11 @@ public class PortoTransactionParser : IBankTransactionParser
             }
 
             // Extrair descrição
+            // Padrão: "... em 03/02 às 17:46 em SHOPEE DIJECOMMERCE."
+            // Regex procura por "em [MERCHANT]." no final da frase, precedido por horário
             var descriptionPatterns = new[]
             {
+                @"às \d{2}:\d{2} em (.+?)\.$", 
                 @"(?:em|no)\s+(.+?)(?:\s+foi|\s+no|\s+R\$|\s+às)",
                 @"local[:\s]+(.+?)(?:\s+R\$|$)",
                 @"estabelecimento[:\s]+(.+?)(?:\s+R\$|$)"
@@ -76,6 +79,9 @@ public class PortoTransactionParser : IBankTransactionParser
                 if (descMatch.Success)
                 {
                     dto.Description = descMatch.Groups[1].Value.Trim();
+                    // Remove ponto final se tiver sobrado
+                    if (dto.Description.EndsWith("."))
+                        dto.Description = dto.Description.TrimEnd('.');
                     break;
                 }
             }
@@ -98,7 +104,9 @@ public class PortoTransactionParser : IBankTransactionParser
             // Data
             if (timestamp > 0)
             {
-                dto.Date = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).DateTime;
+                // Timestamp vem em milissegundos UTC. Converter para UTC-3 (Brasília)
+                var utcDate = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).UtcDateTime;
+                dto.Date = utcDate.AddHours(-3);
             }
             else
             {
