@@ -1,10 +1,14 @@
 using Azure.Storage.Queues;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using TelegramBotManager.Application.DTOs;
+using TelegramBotManager.Application.Features.BankTransactionAutoSave;
 using TelegramBotManager.Common.Helpers;
 using TelegramBotManager.Configurations;
 
@@ -16,10 +20,11 @@ namespace TelegramBotManager.Functions;
 public class Message(
     ILogger<TelegramMessage> _logger,
     FinancialControlOptions _financialControlOptions,
-    [FromKeyedServices("FinancialMessageQueueClient")] QueueClient _financialQueueClient)
+    IMediator _mediator)
 {
     /// <summary>
     /// Handles incoming Telegram messages and enqueue to the right Azure Storage Queue.
+    /// Also processes bank transaction messages automatically.
     /// </summary>
     /// <remarks>The telegram has a weird behavior to resend a message if not receive a response as more soon possible (need to be less than 1 seconds).
     /// So the usage of Azure Storage Queue is to solve that problem.</remarks>
@@ -41,11 +46,61 @@ public class Message(
             return new OkResult();
         }
 
-        var message =
-            await _financialQueueClient.SendMessageAsync(requestBody, cancellationToken);
+        try
+        {
+            bool isHandled = false;
+            string messageToParse = string.Empty;
+            bool isNotificationJson = false;
 
-        _logger.LogInformation($"Message has saved with id: {message?.Value?.MessageId}");
+            // Verificar se é o JSON de notificação (tem "package" ou "texto")
+            if (requestBody.Contains("\"package\"") || requestBody.Contains("\"texto\""))
+            {
+                messageToParse = requestBody;
+                isNotificationJson = true;
+            }
+            else
+            {
+                // Tentar deserializar como TelegramUpdate
+                var update = JsonConvert.DeserializeObject<TelegramUpdateDto>(requestBody,
+                    new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
 
+                if (!string.IsNullOrEmpty(update?.Message?.Text))
+                {
+                    messageToParse = update.Message.Text;
+                }
+            }
+
+            // Se identificamos um conteúdo passível de ser transação
+            if (!string.IsNullOrEmpty(messageToParse))
+            {
+                _logger.LogInformation($"Tentando processar mensagem (Tipo Notificação: {isNotificationJson})...");
+
+                var autoSaveCommand =
+                    new BankTransactionAutoSaveCommand
+                    {
+                        MessageBody = messageToParse
+                    };
+
+                var autoSaveResult = await _mediator.Send(autoSaveCommand, cancellationToken);
+
+                if (autoSaveResult.Success)
+                {
+                    _logger.LogInformation($"Transação bancária processada automaticamente: {autoSaveResult.Message}");
+
+                    return new OkResult();
+                }
+
+
+                return new BadRequestObjectResult(autoSaveResult.ErrorMessage);
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Erro ao tentar processar como transação bancária, enfileirando para processamento normal");
+            return new BadRequestObjectResult(ex.Message);
+        }
 
         return new OkResult();
     }
