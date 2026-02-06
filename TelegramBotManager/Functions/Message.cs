@@ -79,11 +79,18 @@ public class Message(
                 return new OkResult();
             }
 
+            var message =
+                await _financialQueueClient.SendMessageAsync(requestBody, cancellationToken);
+
             return new BadRequestObjectResult(autoSaveResult.ErrorMessage);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Erro ao tentar processar como transação bancária, enfileirando para processamento normal");
+
+            var message =
+                await _financialQueueClient.SendMessageAsync(requestBody, cancellationToken);
+
             return new BadRequestObjectResult(ex.Message);
         }
     }
