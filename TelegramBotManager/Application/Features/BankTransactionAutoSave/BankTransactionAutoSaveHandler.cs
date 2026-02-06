@@ -47,6 +47,7 @@ public class BankTransactionAutoSaveHandler(
             if (matchedParser == null)
             {
                 _logger.LogInformation("Nenhum parser encontrado para a mensagem");
+                result.ErrorMessage = $"Nenhum parser encontrado para a mensagem";
                 return result;
             }
 
