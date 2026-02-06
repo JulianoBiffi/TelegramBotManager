@@ -1,16 +1,17 @@
-using Newtonsoft.Json.Linq;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 using TelegramBotManager.Application.DTOs;
 using TelegramBotManager.Application.Interfaces;
 using TelegramBotManager.Common.Helpers;
 
 namespace TelegramBotManager.Application.Parsers;
 
-public class BBTransactionParser : IBankTransactionParser
+public class SwileTransactionParser : IBankTransactionParser
 {
-    public string BankName => "Google Wallet";
-    public string PackageName => "com.google.android.apps.walletnfcrel";
+    public string BankName => "Swile";
+
+    public string PackageName => "digital.vee.veepay";
 
     public bool CanParse(PurchaseDto purchaseDto)
     {
@@ -28,14 +29,13 @@ public class BBTransactionParser : IBankTransactionParser
         var dto =
             new BankTransactionDto
             {
-                BankSource = "Google Wallet",
-                CreditCard = "NUBANK",
+                BankSource = "swile",
+                CreditCard = "VA",
                 Date = purchaseDto.Timestamp.ConvertUnixToBrazil(),
                 IsValid = false
             };
 
         string textToParse = purchaseDto.FullText;
-
         try
         {
             var valueMatch = Regex.Match(textToParse, @"R\$\s?([0-9.,]+)");
@@ -48,6 +48,7 @@ public class BBTransactionParser : IBankTransactionParser
             var descriptionPatterns =
                 new[]
                 {
+                    @"(?<= em ).*$",
                     @"(?<=às \d{2}:\d{2} em\s)(.*)",
                     @"(?:em|no)\s+(.+?)(?:\s+foi|\s+no|\s+R\$|\s+às)",
                     @"(?:em|no)\s+(.+?)(?:\s+foi|\s+no|\s+R\$|\s+às)",
@@ -60,7 +61,7 @@ public class BBTransactionParser : IBankTransactionParser
                 var descMatch = Regex.Match(textToParse, pattern, RegexOptions.IgnoreCase);
                 if (descMatch.Success)
                 {
-                    dto.Description = descMatch.Groups[1].Value.Trim();
+                    dto.Description = descMatch.Value.Trim();
                     break;
                 }
             }

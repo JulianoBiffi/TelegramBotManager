@@ -5,6 +5,7 @@ namespace TelegramBotManager.Application.Interfaces;
 public interface IBankTransactionParser
 {
     string BankName { get; }
-    bool CanParse(string message);
-    BankTransactionDto Parse(string message);
+    string PackageName { get; }
+    bool CanParse(PurchaseDto purchaseDto);
+    BankTransactionDto Parse(PurchaseDto purchaseDto);
 }

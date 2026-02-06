@@ -25,10 +25,11 @@ public class BankTransactionAutoSaveHandler(
         BankTransactionAutoSaveCommand command,
         CancellationToken cancellationToken)
     {
-        var result = new BankTransactionAutoSaveResult
-        {
-            Success = false
-        };
+        var result =
+            new BankTransactionAutoSaveResult
+            {
+                Success = false
+            };
 
         try
         {
@@ -36,7 +37,7 @@ public class BankTransactionAutoSaveHandler(
             IBankTransactionParser? matchedParser = null;
             foreach (var parser in _parsers)
             {
-                if (parser.CanParse(command.MessageBody))
+                if (parser.CanParse(command.PurchaseData))
                 {
                     matchedParser = parser;
                     break;
@@ -49,15 +50,15 @@ public class BankTransactionAutoSaveHandler(
                 return result;
             }
 
-            _logger.LogInformation($"Parser encontrado: {matchedParser.BankName}");
+            _logger.LogInformation($"Parser encontrado: {matchedParser.BankName} - {matchedParser.PackageName}");
 
             // Fazer o parse da mensagem
-            var bankTransaction = matchedParser.Parse(command.MessageBody);
+            var bankTransaction = matchedParser.Parse(command.PurchaseData);
 
             if (!bankTransaction.IsValid)
             {
-                _logger.LogWarning($"Mensagem parseada mas inválida: {command.MessageBody}");
-                result.ErrorMessage = "Dados da transação inválidos";
+                _logger.LogWarning($"Mensagem parseada pelo {matchedParser.BankName}, mas inválida: {command.PurchaseData.FullText}");
+                result.ErrorMessage = $"Dados da transação inválidos - Parser: {matchedParser.BankName}";
                 return result;
             }
 
@@ -71,7 +72,7 @@ public class BankTransactionAutoSaveHandler(
             if (exists)
             {
                 _logger.LogInformation($"Transação duplicada ignorada: {bankTransaction.Description} - R$ {bankTransaction.Value}");
-                result.Success = true;
+                result.Success = false;
                 result.IsDuplicate = true;
                 result.Message = "Transação já cadastrada anteriormente";
                 return result;
@@ -82,8 +83,8 @@ public class BankTransactionAutoSaveHandler(
 
             // Criar a transação (incluindo lógica de parcelamento se aplicável, por enquanto sem parcelamento no parser)
             // Futuramente os parsers podem retornar ParcelNumber se a mensagem tiver essa info
-            int? parcelNumber = null; 
-            
+            int? parcelNumber = null;
+
             var transactions = Transaction.CreateInstallments(
                 bankTransaction.Description,
                 bankTransaction.Value,
@@ -98,7 +99,7 @@ public class BankTransactionAutoSaveHandler(
             foreach (var transaction in transactions)
             {
                 var saved = await _transactionRepository.SaveAsync(transaction, cancellationToken);
-                if (savedTransaction == null) 
+                if (savedTransaction == null)
                 {
                     savedTransaction = saved;
                 }

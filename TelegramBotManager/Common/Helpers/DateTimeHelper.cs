@@ -71,4 +71,18 @@ public static class DateTimeHelper
 
         return TimeZoneInfo.ConvertTime(date, TimeZoneInfo.Local, brazilTimeZoneInfo);
     }
+
+    public static DateTime ConvertUnixToBrazil(this long timestampUnixMillis)
+    {
+        if (timestampUnixMillis <= 0)
+            return BrazilNow;
+
+        var dataUtc = DateTimeOffset.FromUnixTimeMilliseconds(timestampUnixMillis);
+
+        var timeZoneBrasilia =
+            TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+
+        return TimeZoneInfo.ConvertTime(dataUtc, timeZoneBrasilia).DateTime;
+    }
+
 }

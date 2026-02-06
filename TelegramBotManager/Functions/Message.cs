@@ -20,7 +20,8 @@ namespace TelegramBotManager.Functions;
 public class Message(
     ILogger<TelegramMessage> _logger,
     FinancialControlOptions _financialControlOptions,
-    IMediator _mediator)
+    IMediator _mediator,
+    [FromKeyedServices("FinancialMessageQueueClient")] QueueClient _financialQueueClient)
 {
     /// <summary>
     /// Handles incoming Telegram messages and enqueue to the right Azure Storage Queue.
@@ -41,67 +42,49 @@ public class Message(
             await req.GetBodyAsStringAsync(cancellationToken);
 
         if (string.IsNullOrEmpty(requestBody))
+            return new BadRequestObjectResult("Request body is empty");
+
+        PurchaseDto currentPurchaseDto = null;
+        try
         {
-            _logger.LogError("Request body is empty");
-            return new OkResult();
+            currentPurchaseDto =
+                JsonConvert.DeserializeObject<PurchaseDto>(
+                    requestBody,
+                    new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+
+            if (currentPurchaseDto == null || string.IsNullOrEmpty(currentPurchaseDto.Package) || string.IsNullOrEmpty(currentPurchaseDto.FullText))
+                throw new Exception("Request body is not a valid PurchaseDto");
+
+        }
+        catch (Exception ex)
+        {
+            var message =
+                await _financialQueueClient.SendMessageAsync(requestBody, cancellationToken);
+
+            return new BadRequestObjectResult($"Erro ao converter o objeto: {ex.Message}");
         }
 
         try
         {
-            bool isHandled = false;
-            string messageToParse = string.Empty;
-            bool isNotificationJson = false;
+            var autoSaveCommand =
+                new BankTransactionAutoSaveCommand(currentPurchaseDto);
 
-            // Verificar se é o JSON de notificação (tem "package" ou "texto")
-            if (requestBody.Contains("\"package\"") || requestBody.Contains("\"texto\""))
-            {
-                messageToParse = requestBody;
-                isNotificationJson = true;
-            }
-            else
-            {
-                // Tentar deserializar como TelegramUpdate
-                var update = JsonConvert.DeserializeObject<TelegramUpdateDto>(requestBody,
-                    new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+            var autoSaveResult =
+                await _mediator.Send(autoSaveCommand, cancellationToken);
 
-                if (!string.IsNullOrEmpty(update?.Message?.Text))
-                {
-                    messageToParse = update.Message.Text;
-                }
+            if (autoSaveResult.Success)
+            {
+                _logger.LogInformation($"Transação bancária processada automaticamente: {autoSaveResult.Message}");
+
+                return new OkResult();
             }
 
-            // Se identificamos um conteúdo passível de ser transação
-            if (!string.IsNullOrEmpty(messageToParse))
-            {
-                _logger.LogInformation($"Tentando processar mensagem (Tipo Notificação: {isNotificationJson})...");
-
-                var autoSaveCommand =
-                    new BankTransactionAutoSaveCommand
-                    {
-                        MessageBody = messageToParse
-                    };
-
-                var autoSaveResult = await _mediator.Send(autoSaveCommand, cancellationToken);
-
-                if (autoSaveResult.Success)
-                {
-                    _logger.LogInformation($"Transação bancária processada automaticamente: {autoSaveResult.Message}");
-
-                    return new OkResult();
-                }
-
-
-                return new BadRequestObjectResult(autoSaveResult.ErrorMessage);
-            }
-
-
+            return new BadRequestObjectResult(autoSaveResult.ErrorMessage);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Erro ao tentar processar como transação bancária, enfileirando para processamento normal");
             return new BadRequestObjectResult(ex.Message);
         }
-
-        return new OkResult();
     }
 }

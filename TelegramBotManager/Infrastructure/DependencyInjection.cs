@@ -16,7 +16,8 @@ public static class DependencyInjection
         // Bank notification parsers
         services.AddScoped<IBankTransactionParser, NubankTransactionParser>();
         services.AddScoped<IBankTransactionParser, PortoTransactionParser>();
-        services.AddScoped<IBankTransactionParser, BBTransactionParser>();
-        services.AddScoped<IBankTransactionParser, GoogleWalletTransactionParser>();
+        services.AddScoped<IBankTransactionParser, SwileTransactionParser>();
+        //services.AddScoped<IBankTransactionParser, BBTransactionParser>();
+        //services.AddScoped<IBankTransactionParser, GoogleWalletTransactionParser>();
     }
 }
