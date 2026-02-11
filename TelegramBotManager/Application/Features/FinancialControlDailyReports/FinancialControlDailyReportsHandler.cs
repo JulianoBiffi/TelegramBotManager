@@ -25,7 +25,6 @@ public class FinancialControlDailyReportsHandler(
         var allTransactionsFromMonth =
             await _TransactionRepository.GetTransactionsByPeriod(
                 DateTimeHelper.GetFirstDayOfThisMonth(),
-                DateTimeHelper.GetLastDayOfThisMonth(),
                 cancellationToken);
 
         var transactionMessage =

@@ -15,7 +15,7 @@ public class CreditCardClosingDateRepository : BaseRepository<CreditCardClosingD
 
     public async Task<CreditCardClosingDate?> GetByBankNameAsync(string bankName, CancellationToken cancellationToken)
     {
-        var normalizedBankName = bankName.Trim().ToLower();
+        var normalizedBankName = bankName.Trim().ToUpper();
 
         var response = await _supabaseClient
             .From<CreditCardClosingDateModel>()

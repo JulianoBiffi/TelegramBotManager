@@ -49,7 +49,8 @@ public abstract class BaseRepository<TModel> where TModel : BaseModel, new()
     public async Task<TModel> UpdateAsync(TModel entity, CancellationToken cancellationToken)
     {
         var response =
-            await entity.Update<TModel>();
+            await _supabaseClient.From<TModel>()
+                                 .Update(entity, new QueryOptions { Returning = ReturnType.Representation });
 
         return response.Models.FirstOrDefault();
     }

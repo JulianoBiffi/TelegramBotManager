@@ -22,7 +22,7 @@ public class CreditCardClosingDate : IEntity
         if (bestDayToBuy < 1 || bestDayToBuy > 31)
             throw new ArgumentException("Best day to buy must be between 1 and 31", nameof(bestDayToBuy));
 
-        BankName = bankName.Trim().ToLower();
+        BankName = bankName.Trim().ToUpper();
         ClosingDate = closingDate;
         BestDayToBuy = bestDayToBuy;
     }

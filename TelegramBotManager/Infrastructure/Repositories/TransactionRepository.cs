@@ -1,4 +1,4 @@
-using Azure;
+﻿using Azure;
 using Supabase;
 using System.Threading;
 using TelegramBotManager.Common.Helpers;
@@ -85,6 +85,21 @@ public class TransactionRepository : BaseRepository<TransactionModel>, ITransact
             return new List<Transaction>();
 
         return response.Models.Select(TransactionMapper.ToDomain).ToList();
+    }
+
+    public async Task<List<Transaction>> GetTransactionsByPeriod(DateTime referenceDate, CancellationToken cancellationToken)
+    {
+        var result = await _supabaseClient.Rpc<List<TransactionModel>>(
+            "get_transactions_by_closing_period",
+            new Dictionary<string, object>
+            {
+                { "reference_date", referenceDate }
+            });
+
+        if (result == null || !result.Any())
+            return new List<Transaction>();
+
+        return result.Select(TransactionMapper.ToDomain).ToList();
     }
 
     public async Task<Transaction> GetTransactionById(long transactionId, CancellationToken cancellationToken)

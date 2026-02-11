@@ -9,6 +9,7 @@ using TelegramBotManager.Application.FinancialControl.FinanceControlCreateTransa
 using TelegramBotManager.Common.Exceptions;
 using TelegramBotManager.Common.Helpers;
 using TelegramBotManager.Configurations;
+using TelegramBotManager.Application.Features.CreditCardListClosingDate;
 
 namespace TelegramBotManager.Application.FinancialControl.FinanceControlMessageReceived;
 
@@ -70,6 +71,9 @@ public class FinanceControlMessageReceivedHandler(
                 await _mediator.Send(
                     new FinancialControlDailyReportsCommand(),
                     cancellationToken);
+                break;
+            case var text when text.Contains("/listafechamentocartoes"):
+                await _mediator.Send(new CreditCardListClosingDateCommand(), cancellationToken);
                 break;
             case var text when text.Contains("/datafechamentocartoes"):
                 await _mediator.Send(

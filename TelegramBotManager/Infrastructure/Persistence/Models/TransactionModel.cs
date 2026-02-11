@@ -1,7 +1,5 @@
-using Newtonsoft.Json;
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
-using TelegramBotManager.Domain.Entities.FinancialControl;
 
 namespace TelegramBotManager.Infrastructure.Persistence.Models;
 

@@ -19,7 +19,7 @@ public static class TransactionMapper
         );
         entity.SetId(model.Id); // Assuming Id matches
 
-        if (model.CategoryId.HasValue)
+        if (model.CategoryId.HasValue && model.Category?.Description != null)
         {
             entity.SetCategory(CategoryMapper.ToDomain(model.Category));
         }
