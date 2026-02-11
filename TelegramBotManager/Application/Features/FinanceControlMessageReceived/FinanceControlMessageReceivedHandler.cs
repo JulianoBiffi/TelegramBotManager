@@ -4,10 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
 using TelegramBotManager.Application.Features.FinanceControlDefineCategory;
 using TelegramBotManager.Application.Features.FinancialControlDailyReports;
+using TelegramBotManager.Application.Features.CreditCardClosingDateManagement;
 using TelegramBotManager.Application.FinancialControl.FinanceControlCreateTransaction;
 using TelegramBotManager.Common.Exceptions;
 using TelegramBotManager.Common.Helpers;
 using TelegramBotManager.Configurations;
+using TelegramBotManager.Application.Features.CreditCardListClosingDate;
 
 namespace TelegramBotManager.Application.FinancialControl.FinanceControlMessageReceived;
 
@@ -68,6 +70,17 @@ public class FinanceControlMessageReceivedHandler(
             case var text when text.Contains("/relatoriomensal"):
                 await _mediator.Send(
                     new FinancialControlDailyReportsCommand(),
+                    cancellationToken);
+                break;
+            case var text when text.Contains("/listafechamentocartoes"):
+                await _mediator.Send(new CreditCardListClosingDateCommand(), cancellationToken);
+                break;
+            case var text when text.Contains("/datafechamentocartoes"):
+                await _mediator.Send(
+                    new CreditCardClosingDateManagementCommand()
+                    {
+                        MessageBody = selectedOption
+                    },
                     cancellationToken);
                 break;
             case var text when text.Contains("/relatorio"):

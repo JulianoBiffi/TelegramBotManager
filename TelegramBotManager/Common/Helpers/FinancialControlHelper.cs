@@ -37,8 +37,8 @@ public static class FinancialControlHelper
                     new[]
                     {
                         InlineKeyboardButton.WithCallbackData(
-                            "    Teste    ",
-                            "\n/teste\n"
+                            "    Lista de datas de fechamento dos cartões    ",
+                            "\n/listafechamentocartoes\n"
                         ),
                     },
                 });

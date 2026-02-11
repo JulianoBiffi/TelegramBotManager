@@ -12,6 +12,7 @@ public static class DependencyInjection
     {
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
+        services.AddScoped<ICreditCardClosingDateRepository, CreditCardClosingDateRepository>();
 
         // Bank notification parsers
         services.AddScoped<IBankTransactionParser, NubankTransactionParser>();
