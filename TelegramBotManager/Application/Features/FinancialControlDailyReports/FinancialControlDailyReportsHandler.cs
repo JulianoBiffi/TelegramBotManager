@@ -14,6 +14,7 @@ namespace TelegramBotManager.Application.Features.FinancialControlDailyReports;
 
 public class FinancialControlDailyReportsHandler(
     ITransactionRepository _TransactionRepository,
+    ICategoryRepository _CategoryRepository,
     FinancialControlOptions _financialControlOptions,
     [FromKeyedServices("FinancialControl")] TelegramBotClient _telegramBotClient,
     ILogger<FinancialControlDailyReportsHandler> _logger) : IRequestHandler<FinancialControlDailyReportsCommand, Unit>
@@ -56,8 +57,14 @@ public class FinancialControlDailyReportsHandler(
             transactionMessage.AppendLine($"━━━━━━━━━━━━━━━━━━━━━━━");
             transactionMessage.AppendLine($"💸 Total gasto: *R$ {allTransactionsFromMonth.Sum(y => y.Value):N2}*");
 
+            var allCategory =
+                await _CategoryRepository.GetAllCategoriesAsync(cancellationToken);
+
+            allTransactionsFromMonth.ForEach(t => t.SetCategory(allCategory.FirstOrDefault(c => c.Id == t.CategoryId)));
+
             var transcationWithCategory =
                 allTransactionsFromMonth
+                .Where(x => !x.CreditCard.Equals("NUBANK"))
                 .Select(g => new Tuple<string, double>(g.Category?.Description ?? "Sem categoria", (double)g.Value ))
                 .ToList();
 

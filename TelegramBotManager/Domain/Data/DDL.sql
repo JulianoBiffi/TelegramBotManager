@@ -78,7 +78,7 @@ BEGIN
   FROM financialcontrol.transaction t
   INNER JOIN financialcontrol.credit_card_closing_date cc ON LOWER(t.credit_card) = LOWER(cc.bank_name)
   WHERE t.date >= make_date(ref_year, ref_month, 1) + (cc.best_day_to_buy - 1 || ' days')::interval
-    AND t.date < make_date(ref_year, ref_month, 1) + (cc.best_day_to_buy - 1 || ' days')::interval + interval '1 month'
+    AND t.date < make_date(ref_year, ref_month, 1) + (cc.best_day_to_buy || ' days')::interval + interval '1 month'
   ORDER BY t.id DESC;
 END;
 $$;

@@ -31,6 +31,9 @@ public class Transaction : IEntity
 
     public void SetCategory(Category category)
     {
+        if (category == null)
+            return;
+
         Category = category;
         CategoryId = category?.Id;
     }
