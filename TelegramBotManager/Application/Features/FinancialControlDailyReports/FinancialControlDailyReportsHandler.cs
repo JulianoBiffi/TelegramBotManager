@@ -1,4 +1,4 @@
-﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -49,6 +49,14 @@ public class FinancialControlDailyReportsHandler(
         {
             transactionMessage.AppendLine($"💳 Resumo das transações do cartão: *{groupOfTransaction.Key}*");
             transactionMessage.AppendLine($"💰 Total gasto: R$ {groupOfTransaction.SumOfValues:N2}");
+            
+            if (groupOfTransaction.Key.Equals("VA", StringComparison.OrdinalIgnoreCase))
+            {
+                var remainingBalance = 2000m - (decimal)groupOfTransaction.SumOfValues;
+                if (remainingBalance < 0) remainingBalance = 0;
+                transactionMessage.AppendLine($"Saldo restante: R$ {remainingBalance:N2}");
+            }
+
             transactionMessage.AppendLine(string.Empty);
         }
 
