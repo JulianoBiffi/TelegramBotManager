@@ -66,13 +66,19 @@ CREATE OR REPLACE FUNCTION financialcontrol.get_transactions_by_closing_period(r
 RETURNS SETOF financialcontrol.transaction
 LANGUAGE plpgsql
 AS $$
+DECLARE
+  ref_year INT;
+  ref_month INT;
 BEGIN
+  ref_year := EXTRACT(YEAR FROM reference_date);
+  ref_month := EXTRACT(MONTH FROM reference_date);
+  
   RETURN QUERY
-  SELECT t.id, t.date, t.credit_card, t.value,t.description, t.category_id, t.parcel_number
+  SELECT t.id, t.date, t.credit_card, t.value, t.description, t.category_id, t.parcel_number
   FROM financialcontrol.transaction t
   INNER JOIN financialcontrol.credit_card_closing_date cc ON LOWER(t.credit_card) = LOWER(cc.bank_name)
-  WHERE t.date >= (date_trunc('month', reference_date) + (cc.best_day_to_buy - 1 || ' days')::interval - interval '1 month')
-    AND t.date < (date_trunc('month', reference_date) + (cc.best_day_to_buy - 1 || ' days')::interval + interval '1 month')
+  WHERE t.date >= make_date(ref_year, ref_month, 1) + (cc.best_day_to_buy - 1 || ' days')::interval
+    AND t.date < make_date(ref_year, ref_month, 1) + (cc.best_day_to_buy - 1 || ' days')::interval + interval '1 month'
   ORDER BY t.id DESC;
 END;
 $$;
