@@ -14,4 +14,12 @@ public static class StringHelper
             ? value
             : null;
     }
+
+    public static string? TryTakeStringValueFromString(this string source, string fieldname)
+    {
+        var match =
+            Regex.Match(source.ToLower(), $@"{fieldname.ToLower()}=([a-z0-9_-]+)", RegexOptions.IgnoreCase);
+
+        return match.Success ? match.Groups[1].Value : null;
+    }
 }

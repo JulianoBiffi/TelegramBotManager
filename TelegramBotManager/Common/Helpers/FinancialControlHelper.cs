@@ -36,9 +36,12 @@ public static class FinancialControlHelper
                     },
                     new[]
                     {
-                        InlineKeyboardButton.WithCallbackData(
-                            "    Teste    ",
-                            "\n/teste\n"
+                        InlineKeyboardButton.WithSwitchInlineQueryCurrentChat(
+                            "    Data de Fechamento de Cartões    ",
+                            "\n/datafechamentocartoes\n" +
+                            "Banco (ex: nu, bb, porto): \n" +
+                            "Dia de Fechamento (1-31): \n" +
+                            "Melhor Dia para Compra (1-31): "
                         ),
                     },
                 });
