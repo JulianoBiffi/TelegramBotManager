@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -32,6 +32,13 @@ public static class FinancialControlHelper
                         InlineKeyboardButton.WithCallbackData(
                             "    Listagem de lançamentos do mês atual    ",
                             "\n/relatoriomensal\n"
+                        ),
+                    },
+                    new[]
+                    {
+                        InlineKeyboardButton.WithCallbackData(
+                            "    Editar lançamentos do mês    ",
+                            "\n/editarlancamentosdomes\n"
                         ),
                     },
                     new[]
