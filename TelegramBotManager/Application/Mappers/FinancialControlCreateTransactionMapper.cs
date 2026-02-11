@@ -1,4 +1,4 @@
-﻿using TelegramBotManager.Application.DTOs;
+using TelegramBotManager.Application.DTOs;
 using TelegramBotManager.Common.Exceptions;
 using TelegramBotManager.Common.Helpers;
 
@@ -36,11 +36,11 @@ public static class FinancialControlCreateTransactionMapper
 
         var valueText =
             chunckOfLines[4].Split(':')[1]
-                            .Replace(".", ",")
+                            .Replace(",", ".")
                             .Trim();
 
         currentDTO.Value =
-            decimal.TryParse(valueText, out decimal value)
+            decimal.TryParse(valueText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal value)
             ? value
             : 0;
 
