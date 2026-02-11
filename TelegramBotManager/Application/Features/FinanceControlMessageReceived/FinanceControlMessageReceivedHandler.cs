@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
@@ -10,6 +10,7 @@ using TelegramBotManager.Common.Exceptions;
 using TelegramBotManager.Common.Helpers;
 using TelegramBotManager.Configurations;
 using TelegramBotManager.Application.Features.CreditCardListClosingDate;
+using TelegramBotManager.Application.Features.FinanceControlEditTransactionsOfMonth;
 
 namespace TelegramBotManager.Application.FinancialControl.FinanceControlMessageReceived;
 
@@ -72,6 +73,11 @@ public class FinanceControlMessageReceivedHandler(
                     new FinancialControlDailyReportsCommand(),
                     cancellationToken);
                 break;
+            case var text when text.Contains("/editarlancamentosdomes"):
+                await _mediator.Send(
+                    new FinanceControlEditTransactionsOfMonthCommand(),
+                    cancellationToken);
+                break;
             case var text when text.Contains("/listafechamentocartoes"):
                 await _mediator.Send(new CreditCardListClosingDateCommand(), cancellationToken);
                 break;
@@ -94,11 +100,18 @@ public class FinanceControlMessageReceivedHandler(
                 var categoryId =
                     text.TryTakeValueFromString("categoryid");
 
-                if (!transactionId.HasValue || !categoryId.HasValue)
-                    throw new TelegramException($"Id da transação ou category não informada! \n{text}");
+                if (!transactionId.HasValue)
+                    throw new TelegramException($"Id da transação não informada! \n{text}");
 
-                await _mediator.Send(
-                    new FinanceControlDefineCategoryCommand(transactionId.Value, categoryId.Value), cancellationToken);
+                if (!categoryId.HasValue)
+                {
+                    await _mediator.Send(new FinanceControlDefineCategoryCommand(transactionId.Value), cancellationToken);
+                }
+                else
+                {
+                    await _mediator.Send(
+                        new FinanceControlDefineCategoryCommand(transactionId.Value, categoryId.Value), cancellationToken);
+                }
                 break;
             default:
                 await _telegramBotClient.PrintListOfOptions(_financialControlOptions.AllowedGroup.ToString());
