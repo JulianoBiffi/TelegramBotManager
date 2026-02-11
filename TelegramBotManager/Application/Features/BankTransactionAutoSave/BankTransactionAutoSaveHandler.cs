@@ -73,8 +73,8 @@ public class BankTransactionAutoSaveHandler(
             if (exists)
             {
                 _logger.LogInformation($"Transação duplicada ignorada: {bankTransaction.Description} - R$ {bankTransaction.Value}");
-                result.Success = false;
-                result.IsDuplicate = true;
+                result.Success =
+                    result.IsDuplicate = true;
                 result.Message = "Transação já cadastrada anteriormente";
                 return result;
             }

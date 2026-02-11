@@ -74,9 +74,13 @@ public class Message(
 
             if (autoSaveResult.Success)
             {
-                _logger.LogInformation($"Transação bancária processada automaticamente: {autoSaveResult.Message}");
+                string logOfStatus =
+                    autoSaveResult.IsDuplicate
+                    ? $"Transação bancária já existe na base!"
+                    : $"Transação bancária processada automaticamente: {autoSaveResult.Message}";
+                _logger.LogInformation(logOfStatus);
 
-                return new OkResult();
+                return new OkObjectResult(logOfStatus);
             }
 
             var message =
