@@ -11,6 +11,7 @@ using TelegramBotManager.Common.Helpers;
 using TelegramBotManager.Configurations;
 using TelegramBotManager.Application.Features.CreditCardListClosingDate;
 using TelegramBotManager.Application.Features.FinanceControlEditTransactionsOfMonth;
+using TelegramBotManager.Application.Features.FinanceControlCreateCategory;
 
 namespace TelegramBotManager.Application.FinancialControl.FinanceControlMessageReceived;
 
@@ -112,6 +113,14 @@ public class FinanceControlMessageReceivedHandler(
                     await _mediator.Send(
                         new FinanceControlDefineCategoryCommand(transactionId.Value, categoryId.Value), cancellationToken);
                 }
+                break;
+            case var text when text.Contains("/cadastrarcategoria"):
+                await _mediator.Send(
+                    new FinanceControlCreateCategoryCommand()
+                    {
+                        MessageBody = selectedOption
+                    },
+                    cancellationToken);
                 break;
             default:
                 await _telegramBotClient.PrintListOfOptions(_financialControlOptions.AllowedGroup.ToString());
