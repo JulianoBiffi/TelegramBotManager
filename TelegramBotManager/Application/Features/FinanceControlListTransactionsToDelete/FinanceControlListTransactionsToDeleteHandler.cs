@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.RegularExpressions;
 using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBotManager.Common.Helpers;
@@ -22,14 +23,23 @@ public class FinanceControlListTransactionsToDeleteHandler(
                 DateTimeHelper.GetFirstDayOfThisMonth(),
                 cancellationToken);
 
+        allTransactionsFromMonth =
+            allTransactionsFromMonth.OrderBy(x => x.Date)
+                                    .ToList();
+
         var allButtons = new List<InlineKeyboardButton[]>();
         allTransactionsFromMonth.ForEach(t =>
         {
+            var descriptionNormalized = Regex.Replace(t.Description, @"\s+", " ").Trim();
+
+            if (descriptionNormalized.Length > 20)
+                descriptionNormalized = descriptionNormalized.Substring(0, 17) + "...";
+
             allButtons.Add(
                  new[]
                  {
                      InlineKeyboardButton.WithCallbackData(
-                        $"{t.Description} - R$ {t.Value:N2}",
+                        $"📅 {t.Date:dd/MM} | {descriptionNormalized} | R$ {t.Value:N2}",
                         $"\n/deletartransacao&transactionid={t.Id}\n"
                         ),
                 });

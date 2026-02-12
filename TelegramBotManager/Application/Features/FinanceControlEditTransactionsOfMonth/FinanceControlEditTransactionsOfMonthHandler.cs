@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.RegularExpressions;
 using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBotManager.Common.Helpers;
@@ -29,16 +30,17 @@ public class FinanceControlEditTransactionsOfMonthHandler(
         var allButtons = new List<InlineKeyboardButton[]>();
         allTransactionsFromMonth.ForEach(t =>
         {
-            var description =
-                $"{t.Description}\n" +
-                $"R$ {t.Value:N2}\n" +
-                (t.CategoryId.HasValue ? $"Categoria: {listOfCategories.FirstOrDefault(c => c.Id == t.CategoryId)?.Description ?? string.Empty}" : "");
+
+            var descriptionNormalized = Regex.Replace(t.Description, @"\s+", " ").Trim();
+
+            if (descriptionNormalized.Length > 20)
+                descriptionNormalized = descriptionNormalized.Substring(0, 17) + "...";
 
             allButtons.Add(
                  new[]
                  {
                      InlineKeyboardButton.WithCallbackData(
-                        description,
+                         $"🔄 {t.Date:dd/MM} | {descriptionNormalized} | R$ {t.Value:N2}",
                         $"\n/definircategoria&transactionid={t.Id}\n"
                         ),
                 });

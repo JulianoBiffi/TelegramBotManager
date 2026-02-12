@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using TelegramBotManager.Application.DTOs;
 using TelegramBotManager.Common.Exceptions;
 using TelegramBotManager.Common.Helpers;
@@ -34,6 +35,14 @@ public static class FinancialControlCreateTransactionMapper
                             .Trim()
                             .ToUpper();
 
+        if (string.IsNullOrEmpty(currentDTO.CreditCard))
+            throw new TelegramException(Common.Enum.TelegramInvalidOptionExceptionEnum.InvalidTransactionFormat, "Cartão de crédito não pode ser vazio.");
+
+        if (currentDTO.CreditCard.Contains("NU"))
+        {
+            currentDTO.CreditCard = "NUBANK";
+        }
+
         var valueText =
             chunckOfLines[4].Split(':')[1]
                             .Replace(",", ".")
@@ -47,6 +56,8 @@ public static class FinancialControlCreateTransactionMapper
         currentDTO.Description =
             chunckOfLines[5].Split(':')[1];
 
+        currentDTO.Description =
+             Regex.Replace(currentDTO.Description, @"\s+", " ").Trim();
 
         string parcelNumberText =
             chunckOfLines[6].Split(':')[1]
