@@ -19,7 +19,7 @@ public static class ScottPlotHelper
                                             Value = cureentCategory.Sum(x => x.Item2),
                                             FillColor = Color.RandomHue(),
                                             LabelFontSize = 20,
-                                            LegendText = $"{cureentCategory.Key} " + $"({cureentCategory.Sum(x => x.Item2) / total:p1})",
+                                            LegendText = $"{cureentCategory.Key} " + $"({cureentCategory.Sum(x => x.Item2) / total:p1})" + $" - R$ {cureentCategory.Sum(x => x.Item2):N2}",
                                         })
                                    .ToList();
         pieSlices =

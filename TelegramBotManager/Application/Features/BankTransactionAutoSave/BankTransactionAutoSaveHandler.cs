@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 using Telegram.Bot;
 using TelegramBotManager.Application.Features.FinanceControlDefineCategory;
 using TelegramBotManager.Application.FinancialControl.FinanceControlCreateTransaction;
@@ -55,6 +56,9 @@ public class BankTransactionAutoSaveHandler(
 
             // Fazer o parse da mensagem
             var bankTransaction = matchedParser.Parse(command.PurchaseData);
+
+            bankTransaction.Description =
+                 Regex.Replace(bankTransaction.Description, @"\s+", " ").Trim();
 
             if (!bankTransaction.IsValid)
             {

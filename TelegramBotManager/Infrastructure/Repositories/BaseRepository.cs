@@ -57,6 +57,9 @@ public abstract class BaseRepository<TModel> where TModel : BaseModel, new()
 
     public async Task DeleteAsync(long id, CancellationToken cancellationToken)
     {
-        await _supabaseClient.From<TModel>().Filter("Id", Operator.Equals, id).Delete(cancellationToken: cancellationToken);
+        await
+            _supabaseClient.From<TModel>()
+                           .Filter("id", Operator.Equals, id.ToString())
+                           .Delete(cancellationToken: cancellationToken);
     }
 }
