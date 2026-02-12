@@ -10,6 +10,7 @@ namespace TelegramBotManager.Application.Features.FinanceControlEditTransactions
 
 public class FinanceControlEditTransactionsOfMonthHandler(
     ITransactionRepository _TransactionRepository,
+    ICategoryRepository _CategoryRepository,
     FinancialControlOptions _financialControlOptions,
     [FromKeyedServices("FinancialControl")] TelegramBotClient _telegramBotClient) : IRequestHandler<FinanceControlEditTransactionsOfMonthCommand, Unit>
 {
@@ -22,14 +23,22 @@ public class FinanceControlEditTransactionsOfMonthHandler(
                 DateTimeHelper.GetFirstDayOfThisMonth(),
                 cancellationToken);
 
+        var listOfCategories =
+            await _CategoryRepository.GetAllCategoriesAsync(cancellationToken);
+
         var allButtons = new List<InlineKeyboardButton[]>();
         allTransactionsFromMonth.ForEach(t =>
         {
+            var description =
+                $"{t.Description}\n" +
+                $"R$ {t.Value:N2}\n" +
+                (t.CategoryId.HasValue ? $"Categoria: {listOfCategories.FirstOrDefault(c => c.Id == t.CategoryId)?.Description ?? string.Empty}" : "");
+
             allButtons.Add(
                  new[]
                  {
                      InlineKeyboardButton.WithCallbackData(
-                        $"{t.Description} - R$ {t.Value:N2}",
+                        description,
                         $"\n/definircategoria&transactionid={t.Id}\n"
                         ),
                 });

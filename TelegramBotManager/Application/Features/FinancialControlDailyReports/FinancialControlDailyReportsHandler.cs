@@ -54,7 +54,7 @@ public class FinancialControlDailyReportsHandler(
             {
                 var remainingBalance = 2000m - (decimal)groupOfTransaction.SumOfValues;
                 if (remainingBalance < 0) remainingBalance = 0;
-                transactionMessage.AppendLine($"Saldo restante: R$ {remainingBalance:N2}");
+                transactionMessage.AppendLine($"💲 Saldo restante: R$ {remainingBalance:N2}");
             }
 
             transactionMessage.AppendLine(string.Empty);
@@ -63,7 +63,7 @@ public class FinancialControlDailyReportsHandler(
         if (allTransactionsFromMonth.Any())
         {
             transactionMessage.AppendLine($"━━━━━━━━━━━━━━━━━━━━━━━");
-            transactionMessage.AppendLine($"💸 Total gasto: *R$ {allTransactionsFromMonth.Sum(y => y.Value):N2}*");
+            transactionMessage.AppendLine($"💸 Total gasto: *R$ {allTransactionsFromMonth.Where(x => !x.CreditCard.Equals("VA")).Sum(y => y.Value):N2}*");
 
             var allCategory =
                 await _CategoryRepository.GetAllCategoriesAsync(cancellationToken);
@@ -72,7 +72,7 @@ public class FinancialControlDailyReportsHandler(
 
             var transcationWithCategory =
                 allTransactionsFromMonth
-                .Where(x => !x.CreditCard.Equals("NUBANK"))
+                .Where(x => !x.CreditCard.Equals("VA"))
                 .Select(g => new Tuple<string, double>(g.Category?.Description ?? "Sem categoria", (double)g.Value ))
                 .ToList();
 
