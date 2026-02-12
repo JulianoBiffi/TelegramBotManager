@@ -1,4 +1,4 @@
-﻿using TelegramBotManager.Domain.Entities.FinancialControl;
+using TelegramBotManager.Domain.Entities.FinancialControl;
 
 namespace TelegramBotManager.Domain.Interfaces;
 
@@ -11,4 +11,5 @@ public interface ITransactionRepository
     Task<List<Transaction>> GetTransactionsByPeriod(DateTime referenceDate, CancellationToken cancellationToken);
     Task<Transaction> GetTransactionById(long transactionId, CancellationToken cancellationToken);
     Task<bool> TransactionExists(DateTime date, decimal value, string description, CancellationToken cancellationToken);
+    Task DeleteAsync(long id, CancellationToken cancellationToken);
 }
