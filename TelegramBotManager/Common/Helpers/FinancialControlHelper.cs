@@ -30,21 +30,21 @@ public static class FinancialControlHelper
                     new[]
                     {
                         InlineKeyboardButton.WithCallbackData(
-                            "    Listagem de lançamentos do mês atual    ",
+                            "📝 Listagem de lançamentos do mês atual    ",
                             "\n/relatoriomensal\n"
                         ),
                     },
                     new[]
                     {
                         InlineKeyboardButton.WithCallbackData(
-                            "    Editar lançamentos do mês    ",
+                            "🔄 Editar lançamentos do mês    ",
                             "\n/editarlancamentosdomes\n"
                         ),
                     },
                     new[]
                     {
                         InlineKeyboardButton.WithCallbackData(
-                            "    Lista de datas de fechamento dos cartões    ",
+                            "💳 Lista de datas de fechamento dos cartões    ",
                             "\n/listafechamentocartoes\n"
                         ),
                     },
@@ -175,7 +175,7 @@ public static class FinancialControlHelper
     {
         return
             InlineKeyboardButton.WithSwitchInlineQueryCurrentChat(
-                            "    Cadastro de lançamento    ",
+                            "💼 Cadastro de lançamento    ",
                             "\n/cadastro\n" +
                             "Data (vázio para o dia atual ou insira um intervalo): \n" +
                             "Cartão (bb, nu, porto, va): \n" +

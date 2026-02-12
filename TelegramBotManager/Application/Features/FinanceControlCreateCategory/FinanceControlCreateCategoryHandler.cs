@@ -25,13 +25,13 @@ public class FinanceControlCreateCategoryHandler(
                        .ToArray();
 
         var transactionIdText =
-            chunckOfLines[0].TryTakeValueFromString("transactionid");
+            chunckOfLines[1].TryTakeValueFromString("transactionid");
 
         if (!transactionIdText.HasValue)
             throw new TelegramException($"Não foi possível identificar a transação no comando: {chunckOfLines[0]}");
 
         var categoryDescription =
-            chunckOfLines[1].Split(':')[1].Trim();
+            chunckOfLines[2].Split(':')[1].Trim();
 
         var savedCategory =
             await _CategoryRepository.SaveAsync(
