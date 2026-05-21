@@ -1,0 +1,15 @@
+using TelegramBotManager.Domain.Entities.FinancialControl;
+
+namespace TelegramBotManager.Domain.Interfaces;
+
+public interface ITransactionRepository
+{
+    Task<List<Transaction>> GetTransactions(CancellationToken cancellationToken);
+    Task<Transaction> SaveAsync(Transaction transaction, CancellationToken cancellationToken);
+    Task<decimal> GetAmountByPeriodAsync(DateTime startDate, DateTime endDate, long? categoryId, CancellationToken cancellationToken, bool filterByCategory = false);
+    Task<List<Transaction>> GetTransactionsByPeriod(DateTime startDate, DateTime endDate, CancellationToken cancellationToken);
+    Task<List<Transaction>> GetTransactionsByPeriod(DateTime referenceDate, CancellationToken cancellationToken);
+    Task<Transaction> GetTransactionById(long transactionId, CancellationToken cancellationToken);
+    Task<bool> TransactionExists(DateTime date, decimal value, string description, CancellationToken cancellationToken);
+    Task DeleteAsync(long id, CancellationToken cancellationToken);
+}

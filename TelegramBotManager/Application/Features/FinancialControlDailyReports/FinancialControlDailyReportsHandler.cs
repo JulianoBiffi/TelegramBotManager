@@ -1,0 +1,102 @@
+using System.Text;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Telegram.Bot;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
+using TelegramBotManager.Common.Helpers;
+using TelegramBotManager.Configurations;
+using TelegramBotManager.Domain.Interfaces;
+
+namespace TelegramBotManager.Application.Features.FinancialControlDailyReports;
+
+public class FinancialControlDailyReportsHandler(
+    ITransactionRepository _TransactionRepository,
+    ICategoryRepository _CategoryRepository,
+    FinancialControlOptions _financialControlOptions,
+    [FromKeyedServices("FinancialControl")] TelegramBotClient _telegramBotClient,
+    ILogger<FinancialControlDailyReportsHandler> _logger) : IRequestHandler<FinancialControlDailyReportsCommand, Unit>
+{
+    public async Task<Unit> Handle(
+        FinancialControlDailyReportsCommand request,
+        CancellationToken cancellationToken)
+    {
+        var allTransactionsFromMonth =
+            await _TransactionRepository.GetTransactionsByPeriod(
+                DateTimeHelper.GetFirstDayOfThisMonth(),
+                cancellationToken);
+
+        var transactionMessage =
+            new StringBuilder()
+                .AppendLine("🏦 *Informe diário de movimentações*");
+
+        if (!allTransactionsFromMonth.Any())
+        {
+            transactionMessage.AppendLine("📝 Nenhuma transação registrada até o momento neste mês!.");
+        }
+
+        var transactionsGroupedByCreditCard =
+            allTransactionsFromMonth
+            .Where(x => !string.IsNullOrEmpty(x.CreditCard.Name))
+            .GroupBy(t => t.CreditCard)
+            .OrderBy(g => g.Key)
+            .Select(g => new { g.Key, SumOfValues = g.Sum(t => t.Value) });
+
+        transactionMessage.AppendLine($"━━━━━━━━━━━━━━━━━━━━━━━");
+        foreach (var groupOfTransaction in transactionsGroupedByCreditCard)
+        {
+            transactionMessage.AppendLine($"💳 Resumo das transações do cartão: *{groupOfTransaction.Key}*");
+            transactionMessage.AppendLine($"💰 Total gasto: R$ {groupOfTransaction.SumOfValues:N2}");
+
+            if (groupOfTransaction.Key.Name?.Equals("VA", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var remainingBalance = 2000m - (decimal)groupOfTransaction.SumOfValues;
+                if (remainingBalance < 0) remainingBalance = 0;
+                transactionMessage.AppendLine($"💲 Saldo restante: R$ {remainingBalance:N2}");
+            }
+
+            transactionMessage.AppendLine(string.Empty);
+        }
+
+        if (allTransactionsFromMonth.Any())
+        {
+            transactionMessage.AppendLine($"━━━━━━━━━━━━━━━━━━━━━━━");
+            transactionMessage.AppendLine($"💸 Total gasto: *R$ {allTransactionsFromMonth.Where(x => x.CreditCard.Name != "VA").Sum(y => y.Value):N2}*");
+
+            var allCategory =
+                await _CategoryRepository.GetAllCategoriesAsync(cancellationToken);
+
+            allTransactionsFromMonth.ForEach(t => t.SetCategory(allCategory.FirstOrDefault(c => c.Id == t.CategoryId)));
+
+            var transcationWithCategory =
+                allTransactionsFromMonth
+                .Where(x => x.CreditCard.Name != "VA")
+                .Select(g => new Tuple<string, double>(g.Category?.Description ?? "Sem categoria", (double)g.Value.Value))
+                .ToList();
+
+            var pieChartPath =
+                    await ScottPlotHelper.GeneratePieChart(transcationWithCategory);
+
+            using var fileStream = System.IO.File.OpenRead(pieChartPath);
+
+            await _telegramBotClient.SendPhoto(
+                chatId: _financialControlOptions.AllowedGroup,
+                photo: new InputFileStream(fileStream),
+                caption: transactionMessage.ToString(),
+                parseMode: ParseMode.Markdown
+            );
+
+            await FileHelper.SafeDeleteFile(pieChartPath);
+
+            return Unit.Value;
+        }
+
+        await _telegramBotClient.SendMessage(
+            _financialControlOptions.AllowedGroup,
+            transactionMessage.ToString(),
+            parseMode: ParseMode.Markdown);
+
+        return Unit.Value;
+    }
+}

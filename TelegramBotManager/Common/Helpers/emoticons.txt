@@ -1,0 +1,65 @@
+﻿💳 Credit Card
+💰 Money Bag
+💵 Dollar Banknote
+🏦 Bank
+📈 Chart Increasing
+📉 Chart Decreasing
+💸 Money with Wings (expenses/spending)
+📊 Bar Chart
+💲 Heavy Dollar Sign
+🪙 Coin
+🧾 Receipt
+🏧 ATM Sign
+🏦 Bank Building
+💹 Chart with Upwards Trend and Yen Sign
+🤑 Money-Mouth Face (wealth, profit)
+🤝 Handshake (deal, agreement)
+💼 Briefcase (business, finance)
+💴 Yen Banknote
+💶 Euro Banknote
+💷 Pound Banknote
+🔒 Lock (secure transactions)
+💎 Gem Stone (wealth, value)
+🏦 Cash Deposit
+✨ Sparkles (wealth, success)
+🪙 Cryptocurrency coins (could use 🪙, ₿Bitcoin symbol)
+💳 Credit Card
+💰 Money Bag
+💵 Dollar Banknote
+🏦 Bank
+📈 Chart Increasing
+📉 Chart Decreasing
+💸 Money with Wings (spending)
+📊 Bar Chart
+💲 Heavy Dollar Sign
+🪙 Coin
+🧾 Receipt
+🏧 ATM Sign
+💹 Chart with Upwards Trend and Yen Sign
+🤑 Money-Mouth Face (profit, wealth)
+🤝 Handshake (agreement, deal)
+💼 Briefcase (business, finance)
+💴 Yen Banknote
+💶 Euro Banknote
+💷 Pound Banknote
+🔒 Lock (security)
+💎 Gem Stone (value, wealth)
+✨ Sparkles (success, wealth)
+🪙 Cryptocurrency coin
+Generic / Common Useful Emoticons
+😀 Smiling Face (friendly UI)
+😊 Smiling Face with Smiling Eyes (welcome, success)
+👍 Thumbs Up (approval, success)
+👎 Thumbs Down (failure, rejection)
+⚠️ Warning Sign (alerts, caution)
+❌ Cross Mark (error, failure)
+✅ Check Mark (success, done)
+🔄 Refresh (update, retry)
+🕒 Clock (time, pending)
+📅 Calendar (due dates, schedules)
+📞 Telephone (contact)
+📨 Incoming Envelope (message, email)
+🚀 Rocket (growth, launch)
+🔔 Bell (notification, alert)
+🛠️ Hammer and Wrench (settings, fixing)
+🧩 Puzzle Piece (integration, parts)
