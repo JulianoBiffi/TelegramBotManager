@@ -1,4 +1,4 @@
-# ?? TelegramBotManager
+﻿# 🤖 TelegramBotManager
 
 <div align="center">
   <p>A robust backend application built with <strong>Azure Functions</strong> and <strong>C# (.NET 9)</strong> to manage financial transactions through a Telegram Bot. It seamlessly integrates with push notifications and banking alerts to help you take control of your finances.</p>
@@ -6,13 +6,13 @@
 
 ---
 
-## ?? Overview
+## 📖 Overview
 
 **TelegramBotManager** acts as the central hub for receiving, parsing, and storing financial data. It is primarily fed by **[NotificationReader](https://github.com/JulianoBiffi/NotificationReader)**, an Android app that captures smartphone push notifications (from banks and credit cards) and forwards them to this backend via HTTP POST. 
 
-Once received, this application uses a Telegram Bot interface to categorize expenses, manage credit card closing dates, and send daily consolidated financial reports right to your phone! ????
+Once received, this application uses a Telegram Bot interface to categorize expenses, manage credit card closing dates, and send daily consolidated financial reports right to your phone! 📱💸
 
-### ?? Previews
+### 📸 Previews
 
 Here are some previews of the Bot in action:
 
@@ -22,29 +22,29 @@ Here are some previews of the Bot in action:
   <img src="docs/options-menu.jpg" alt="Inline Menu Options" width="30%">
 </div>
 
-## ? Features
+## ✨ Features
 
 - **Automated Bank Parsing:** Captures push notifications and auto-saves bank transactions.
 - **Telegram Bot Integration:** Manage your finances completely via Telegram interactive menus.
 - **Expense Categorization:** Assign categories to new transactions dynamically.
-- **Daily Financial Reports:** Automatically generates and sends a daily summary (with pie charts ??) to your Telegram group every morning at 08:00 AM.
+- **Daily Financial Reports:** Automatically generates and sends a daily summary (with pie charts 🥧) to your Telegram group every morning at 08:00 AM.
 - **Asynchronous Queue Processing:** Built heavily on Azure Storage Queues to prevent Webhook timeouts and ensure no message is ever lost.
 
-## ?? Bot Commands
+## 💬 Bot Commands
 
 The Telegram Bot interacts via rich interactive menus and inline queries. Here are the main commands available:
 
 | Command | Icon | Description |
 |---|---|---|
-| `/cadastro` | ? | Manually registers a new financial transaction (Date, Credit Card, Value, Description, Installments). |
-| `/relatoriomensal` | ?? | Lists all transactions for the current month. |
-| `/editarlancamentosdomes` | ?? | Allows changing the category of an existing transaction. |
-| `/excluirlancamentos` | ??? | Deletes a previously registered transaction. |
-| `/listafechamentocartoes` | ?? | Lists the closing and best-day-to-buy dates for all registered credit cards. |
-| `/definircategoria` | ??? | Binds a transaction to an existing category. |
-| `/cadastrarcategoria` | ?? | Registers a brand new category in the system. |
+| `/cadastro` | ✅ | Manually registers a new financial transaction (Date, Credit Card, Value, Description, Installments). |
+| `/relatoriomensal` | 🏦 | Lists all transactions for the current month. |
+| `/editarlancamentosdomes` | 🔄 | Allows changing the category of an existing transaction. |
+| `/excluirlancamentos` | 🗑️ | Deletes a previously registered transaction. |
+| `/listafechamentocartoes` | 💳 | Lists the closing and best-day-to-buy dates for all registered credit cards. |
+| `/definircategoria` | 🏷️ | Binds a transaction to an existing category. |
+| `/cadastrarcategoria` | 🆕 | Registers a brand new category in the system. |
 
-## ??? Architecture & Patterns
+## 🏗️ Architecture & Patterns
 
 This project enforces strict software engineering best practices:
 - **Clean Architecture & SOLID:** Highly decoupled layers ensuring maintainability.
@@ -52,7 +52,7 @@ This project enforces strict software engineering best practices:
 - **Domain-Driven Design (DDD):** Rich domain models with `Value Objects` (like `Money` and `CreditCard`) ensuring the system never deals with invalid primitive states.
 - **Message Router:** A custom `ITelegramMessageRouter` orchestrates incoming webhook texts and maps them to the correct MediatR Use Case.
 
-## ?? Technologies Used
+## 🚀 Technologies Used
 
 - **C# & .NET 9.0:** (Azure Functions Isolated Worker Model)
 - **Supabase (PostgreSQL):** For persistent, relational data storage.
@@ -61,7 +61,7 @@ This project enforces strict software engineering best practices:
 - **MediatR:** For the CQRS implementation.
 - **ScottPlot:** To generate beautiful financial pie charts directly on the backend.
 
-## ?? How to Run Locally
+## ⚙️ How to Run Locally
 
 ### Prerequisites
 1. [.NET 9.0 SDK](https://dotnet.microsoft.com/download)
@@ -102,15 +102,15 @@ This project enforces strict software engineering best practices:
    func start
    ```
 
-## ?? Deployment
+## ☁️ Deployment
 
 The project is fully configured for automated deployments. A Continuous Integration and Continuous Deployment (CI/CD) pipeline is set up using **Azure Pipelines**. 
 
 Every push to the main branch automatically triggers a build and deploys the latest version directly to the Azure Functions environment. Ensure that all App Settings (like `FinancialControl_TelegramBotToken` and `SupabaseApiKey`) are properly configured in your Azure Portal.
 
-## ?? Related Projects
+## 🔗 Related Projects
 
 - **[NotificationReader](https://github.com/JulianoBiffi/NotificationReader):** The Android mobile application responsible for reading smartphone push notifications and sending them to this TelegramBotManager backend.
 
 ---
-*Developed with ?? for better financial tracking.*
+*Developed with ❤️ for better financial tracking.*
