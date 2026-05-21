@@ -6,7 +6,7 @@ public interface ITransactionRepository
 {
     Task<List<Transaction>> GetTransactions(CancellationToken cancellationToken);
     Task<Transaction> SaveAsync(Transaction transaction, CancellationToken cancellationToken);
-    Task<decimal> GetAmmountOfMonth(Transaction transaction, CancellationToken cancellationToken, bool filterByCategory = false);
+    Task<decimal> GetAmountByPeriodAsync(DateTime startDate, DateTime endDate, long? categoryId, CancellationToken cancellationToken, bool filterByCategory = false);
     Task<List<Transaction>> GetTransactionsByPeriod(DateTime startDate, DateTime endDate, CancellationToken cancellationToken);
     Task<List<Transaction>> GetTransactionsByPeriod(DateTime referenceDate, CancellationToken cancellationToken);
     Task<Transaction> GetTransactionById(long transactionId, CancellationToken cancellationToken);

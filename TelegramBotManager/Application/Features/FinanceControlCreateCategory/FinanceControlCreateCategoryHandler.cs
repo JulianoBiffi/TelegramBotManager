@@ -47,8 +47,10 @@ public class FinanceControlCreateCategoryHandler(
 
         await _TransactionRepository.SaveAsync(transaction, cancellationToken);
 
+        var firstDay = DateTimeHelper.GetFirstDayOfThisMonth();
+        var lastDay = DateTimeHelper.GetLastDayOfThisMonth();
         var ammountOfThisCategory =
-            await _TransactionRepository.GetAmmountOfMonth(transaction, cancellationToken, true);
+            await _TransactionRepository.GetAmountByPeriodAsync(firstDay, lastDay, transaction.CategoryId, cancellationToken, true);
 
         await _telegramBotClient.PrintNewCategory(
             _financialControlOptions.AllowedGroup,

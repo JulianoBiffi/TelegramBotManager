@@ -1,4 +1,5 @@
 using TelegramBotManager.Domain.Entities.FinancialControl;
+using TelegramBotManager.Domain.ValueObjects;
 using TelegramBotManager.Infrastructure.Persistence.Models;
 
 namespace TelegramBotManager.Infrastructure.Repositories.Mappers;
@@ -11,13 +12,15 @@ public static class TransactionMapper
 
         var entity = new Transaction(
             model.Description,
-            model.Value,
+            new Money(model.Value),
             model.Date,
-            model.CreditCard,
+            new CreditCard(model.CreditCard),
             model.CategoryId,
             model.ParcelNumber
-        );
-        entity.SetId(model.Id); // Assuming Id matches
+        )
+        {
+            Id = model.Id // Possible thanks to internal set
+        };
 
         if (model.CategoryId.HasValue && model.Category?.Description != null)
         {
@@ -35,9 +38,9 @@ public static class TransactionMapper
         {
             Id = entity.Id,
             Description = entity.Description,
-            Value = entity.Value,
+            Value = entity.Value, // Implicit operator Money -> decimal
             Date = entity.Date,
-            CreditCard = entity.CreditCard,
+            CreditCard = entity.CreditCard, // Implicit operator CreditCard -> string
             CategoryId = entity.CategoryId,
             ParcelNumber = entity.ParcelNumber,
             Category = CategoryMapper.ToModel(entity.Category)

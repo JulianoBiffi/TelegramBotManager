@@ -13,6 +13,8 @@ public static class DependencyInjection
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<ICreditCardClosingDateRepository, CreditCardClosingDateRepository>();
+        
+        services.AddScoped<ITelegramMessageRouter, TelegramBotManager.Application.Services.TelegramMessageRouter>();
 
         // Bank notification parsers
         services.AddScoped<IBankTransactionParser, NubankTransactionParser>();

@@ -1,4 +1,4 @@
-﻿using Azure;
+using Azure;
 using Supabase;
 using System.Threading;
 using TelegramBotManager.Common.Helpers;
@@ -33,28 +33,29 @@ public class TransactionRepository : BaseRepository<TransactionModel>, ITransact
         return TransactionMapper.ToDomain(result);
     }
 
-    public async Task<decimal> GetAmmountOfMonth(
-        Transaction transaction,
+    public async Task<decimal> GetAmountByPeriodAsync(
+        DateTime startDate,
+        DateTime endDate,
+        long? categoryId,
         CancellationToken cancellationToken,
         bool filterByCategory = false)
     {
-        var startDate = DateTimeHelper.GetFirstDayOfThisMonth().ToString("yyyy-MM-dd");
-        var endDate = DateTimeHelper.GetLastDayOfThisMonth().ToString("yyyy-MM-dd");
+        var startDateStr = startDate.ToString("yyyy-MM-dd");
+        var endDateStr = endDate.ToString("yyyy-MM-dd");
 
         var query =
             _supabaseClient
             .From<TransactionModel>()
             .Select("value")
-            .Filter("date", Operator.GreaterThanOrEqual, startDate)
-            .Filter("date", Operator.LessThanOrEqual, endDate);
+            .Filter("date", Operator.GreaterThanOrEqual, startDateStr)
+            .Filter("date", Operator.LessThanOrEqual, endDateStr);
 
         if (filterByCategory)
         {
-            if (transaction.CategoryId.HasValue)
+            if (categoryId.HasValue)
             {
-                var categoryId = transaction.CategoryId.ToString();
-
-                query = query.Filter("category_id", Operator.Equals, categoryId);
+                var catIdStr = categoryId.ToString();
+                query = query.Filter("category_id", Operator.Equals, catIdStr);
             }
             else
                 query = query.Filter<TransactionModel>("category_id", Operator.Is, null);

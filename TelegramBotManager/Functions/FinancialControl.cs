@@ -5,16 +5,25 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Telegram.Bot;
 using TelegramBotManager.Application.DTOs;
-using TelegramBotManager.Application.FinancialControl.FinanceControlMessageReceived;
+using TelegramBotManager.Application.Interfaces;
 using TelegramBotManager.Common.Exceptions;
+using TelegramBotManager.Common.Helpers;
+using TelegramBotManager.Configurations;
 
 namespace TelegramBotManager.Functions;
 
 /// <summary>
 /// Manages financial control operations with telegram bot.
 /// </summary>
-public class FinancialControl(IMediator _mediator, ILogger<FinancialControl> _logger, [FromKeyedServices("FinancialQueueClient")] QueueClient _financialQueueClient)
+public class FinancialControl(
+    IMediator _mediator, 
+    ILogger<FinancialControl> _logger, 
+    [FromKeyedServices("FinancialQueueClient")] QueueClient _financialQueueClient,
+    ITelegramMessageRouter _router,
+    [FromKeyedServices("FinancialControl")] TelegramBotClient _telegramBotClient,
+    FinancialControlOptions _financialControlOptions)
 {
     [Function("FinancialControlQueue")]
     public async Task Run(
@@ -37,9 +46,18 @@ public class FinancialControl(IMediator _mediator, ILogger<FinancialControl> _lo
             var update =
                 JsonConvert.DeserializeObject<TelegramUpdateDto>(messageBody, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
 
-            await _mediator.Send(
-                new FinanceControlMessageReceivedCommand() { Request = update },
-                cancellationToken);
+            await _telegramBotClient.SendTyping(_financialControlOptions.AllowedGroup.ToString());
+
+            var command = _router.RouteMessage(update);
+
+            if (command != null)
+            {
+                await _mediator.Send(command, cancellationToken);
+            }
+            else
+            {
+                await _telegramBotClient.PrintListOfOptions(_financialControlOptions.AllowedGroup.ToString());
+            }
         }
         catch (TelegramException)
         {

@@ -1,16 +1,25 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
+using Telegram.Bot;
 using TelegramBotManager.Application.Mappers;
 using TelegramBotManager.Domain.Interfaces;
 using TelegramBotManager.Domain.Entities.FinancialControl;
+using TelegramBotManager.Domain.Services;
+using TelegramBotManager.Common.Helpers;
+using TelegramBotManager.Configurations;
+using TelegramBotManager.Application.Features.FinanceControlDefineCategory;
 
 namespace TelegramBotManager.Application.FinancialControl.FinanceControlCreateTransaction;
 
 public class FinanceControlCreateTransactionHandler(
     ITransactionRepository _TransactionRepository,
-    ICategoryRepository _CategoryRepository) : IRequestHandler<FinanceControlCreateTransactionCommand, FinanceControlCreateTransactionResult>
+    ICategoryRepository _CategoryRepository,
+    IMediator _mediator,
+    FinancialControlOptions _financialControlOptions,
+    [FromKeyedServices("FinancialControl")] TelegramBotClient _telegramBotClient) : IRequestHandler<FinanceControlCreateTransactionCommand, Unit>
 {
-    public async Task<FinanceControlCreateTransactionResult> Handle(
+    public async Task<Unit> Handle(
         FinanceControlCreateTransactionCommand command,
         CancellationToken cancellationToken)
     {
@@ -29,8 +38,7 @@ public class FinanceControlCreateTransactionHandler(
         var tryToFindCategory =
             await _CategoryRepository.GetCategoryByTranscationDesciption(currentDto.Description);
 
-        // Domain Logic: Create transactions (including logic for parcels)
-        var transactions = Transaction.CreateInstallments(
+        var transactions = TransactionInstallmentService.CreateInstallments(
             currentDto.Description,
             currentDto.Value,
             currentDto.Date,
@@ -40,7 +48,6 @@ public class FinanceControlCreateTransactionHandler(
 
         Transaction savedTransaction = null;
 
-        // Persist all generated transactions
         foreach (var transaction in transactions)
         {
             var saved = await _TransactionRepository.SaveAsync(transaction, cancellationToken);
@@ -50,23 +57,34 @@ public class FinanceControlCreateTransactionHandler(
             }
         }
 
+        var firstDay = DateTimeHelper.GetFirstDayOfThisMonth();
+        var lastDay = DateTimeHelper.GetLastDayOfThisMonth();
+
         var ammountOfMonth =
-            await _TransactionRepository.GetAmmountOfMonth(savedTransaction, cancellationToken);
+            await _TransactionRepository.GetAmountByPeriodAsync(firstDay, lastDay, null, cancellationToken);
 
         var ammountOfThisCategory =
-            await _TransactionRepository.GetAmmountOfMonth(savedTransaction, cancellationToken, true);
+            await _TransactionRepository.GetAmountByPeriodAsync(firstDay, lastDay, savedTransaction.CategoryId, cancellationToken, true);
 
-        return
-            new FinanceControlCreateTransactionResult()
-            {
-                Description = savedTransaction.Description,
-                CreditCard = savedTransaction.CreditCard,
-                Date = savedTransaction.Date,
-                Id = savedTransaction.Id,
-                Value = savedTransaction.Value,
-                Category = tryToFindCategory,
-                AmmountOfMonth = ammountOfMonth,
-                AmmountOfThisCategory = ammountOfThisCategory
-            };
+        var result = new FinanceControlCreateTransactionResult()
+        {
+            Description = savedTransaction.Description,
+            CreditCard = savedTransaction.CreditCard,
+            Date = savedTransaction.Date,
+            Id = savedTransaction.Id,
+            Value = savedTransaction.Value,
+            Category = tryToFindCategory,
+            AmmountOfMonth = ammountOfMonth,
+            AmmountOfThisCategory = ammountOfThisCategory
+        };
+
+        await _telegramBotClient.PrintCreatedTransaction(_financialControlOptions.AllowedGroup, result);
+
+        if (result.Category == null)
+        {
+            await _mediator.Send(new FinanceControlDefineCategoryCommand(result.Id), cancellationToken);
+        }
+
+        return Unit.Value;
     }
 }

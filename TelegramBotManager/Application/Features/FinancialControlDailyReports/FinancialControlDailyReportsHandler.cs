@@ -39,7 +39,7 @@ public class FinancialControlDailyReportsHandler(
 
         var transactionsGroupedByCreditCard =
             allTransactionsFromMonth
-            .Where(x => !string.IsNullOrEmpty(x.CreditCard))
+            .Where(x => !string.IsNullOrEmpty(x.CreditCard.Name))
             .GroupBy(t => t.CreditCard)
             .OrderBy(g => g.Key)
             .Select(g => new { g.Key, SumOfValues = g.Sum(t => t.Value) });
@@ -50,7 +50,7 @@ public class FinancialControlDailyReportsHandler(
             transactionMessage.AppendLine($"💳 Resumo das transações do cartão: *{groupOfTransaction.Key}*");
             transactionMessage.AppendLine($"💰 Total gasto: R$ {groupOfTransaction.SumOfValues:N2}");
             
-            if (groupOfTransaction.Key.Equals("VA", StringComparison.OrdinalIgnoreCase))
+            if (groupOfTransaction.Key.Name?.Equals("VA", StringComparison.OrdinalIgnoreCase) == true)
             {
                 var remainingBalance = 2000m - (decimal)groupOfTransaction.SumOfValues;
                 if (remainingBalance < 0) remainingBalance = 0;
@@ -63,7 +63,7 @@ public class FinancialControlDailyReportsHandler(
         if (allTransactionsFromMonth.Any())
         {
             transactionMessage.AppendLine($"━━━━━━━━━━━━━━━━━━━━━━━");
-            transactionMessage.AppendLine($"💸 Total gasto: *R$ {allTransactionsFromMonth.Where(x => !x.CreditCard.Equals("VA")).Sum(y => y.Value):N2}*");
+            transactionMessage.AppendLine($"💸 Total gasto: *R$ {allTransactionsFromMonth.Where(x => x.CreditCard.Name != "VA").Sum(y => y.Value):N2}*");
 
             var allCategory =
                 await _CategoryRepository.GetAllCategoriesAsync(cancellationToken);
@@ -72,8 +72,8 @@ public class FinancialControlDailyReportsHandler(
 
             var transcationWithCategory =
                 allTransactionsFromMonth
-                .Where(x => !x.CreditCard.Equals("VA"))
-                .Select(g => new Tuple<string, double>(g.Category?.Description ?? "Sem categoria", (double)g.Value ))
+                .Where(x => x.CreditCard.Name != "VA")
+                .Select(g => new Tuple<string, double>(g.Category?.Description ?? "Sem categoria", (double)g.Value.Value ))
                 .ToList();
 
         var pieChartPath =

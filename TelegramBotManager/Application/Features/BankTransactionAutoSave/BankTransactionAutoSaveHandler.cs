@@ -10,6 +10,7 @@ using TelegramBotManager.Common.Helpers;
 using TelegramBotManager.Configurations;
 using TelegramBotManager.Domain.Entities.FinancialControl;
 using TelegramBotManager.Domain.Interfaces;
+using TelegramBotManager.Domain.Services;
 
 namespace TelegramBotManager.Application.Features.BankTransactionAutoSave;
 
@@ -90,7 +91,7 @@ public class BankTransactionAutoSaveHandler(
             // Futuramente os parsers podem retornar ParcelNumber se a mensagem tiver essa info
             int? parcelNumber = null;
 
-            var transactions = Transaction.CreateInstallments(
+            var transactions = TransactionInstallmentService.CreateInstallments(
                 bankTransaction.Description,
                 bankTransaction.Value,
                 bankTransaction.Date,
@@ -112,12 +113,15 @@ public class BankTransactionAutoSaveHandler(
 
             _logger.LogInformation($"Transação salva automaticamente: {savedTransaction.Description} - R$ {savedTransaction.Value}");
 
+            var firstDay = DateTimeHelper.GetFirstDayOfThisMonth();
+            var lastDay = DateTimeHelper.GetLastDayOfThisMonth();
+
             // Obter valores atualizados para retorno
             var ammountOfMonth =
-                await _transactionRepository.GetAmmountOfMonth(savedTransaction, cancellationToken);
+                await _transactionRepository.GetAmountByPeriodAsync(firstDay, lastDay, null, cancellationToken);
 
             var ammountOfThisCategory = category != null ?
-                await _transactionRepository.GetAmmountOfMonth(savedTransaction, cancellationToken, true) : 0;
+                await _transactionRepository.GetAmountByPeriodAsync(firstDay, lastDay, savedTransaction.CategoryId, cancellationToken, true) : 0;
 
             var createResult = new FinanceControlCreateTransactionResult()
             {
